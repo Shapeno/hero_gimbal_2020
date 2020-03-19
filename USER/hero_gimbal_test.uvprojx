@@ -618,11 +618,6 @@
               <FilePath>..\src\bsp\usart6.c</FilePath>
             </File>
             <File>
-              <FileName>imu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\imu.c</FilePath>
-            </File>
-            <File>
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\adc.c</FilePath>
@@ -666,6 +661,11 @@
               <FileName>oled.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_imu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\bsp_imu.c</FilePath>
             </File>
           </Files>
         </Group>

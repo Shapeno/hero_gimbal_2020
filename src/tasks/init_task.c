@@ -33,7 +33,7 @@ void CAN_Task(void*p_arg);			//任务函数
 //陀螺仪任务
 #define IMU_TASK_PRIO	2			//任务优先级
 #define IMU_STK_SIZE	128			//任务堆栈大小
-#define IMU_TASK_PERIOD 1			//任务运行周期ms
+#define IMU_TASK_PERIOD 0			//任务运行周期ms
 TaskHandle_t IMU_Task_Handler;		//任务句柄
 void IMU_Task(void*p_arg);			//任务函数
 //控制任务
@@ -160,14 +160,17 @@ void CAN_Task(void*p_arg){
 *@brief	陀螺仪任务
 */
 void IMU_Task(void*p_arg){
-	portTickType currentTime;
+//	portTickType currentTime;
 	while(1){
-		currentTime = xTaskGetTickCount();	//获取当前系统时间
-		
-		IMU_temp_Control(imu_temp);
-		imu_main();
-		
-		vTaskDelayUntil(&currentTime, IMU_TASK_PERIOD/portTICK_RATE_MS);
+//		currentTime = xTaskGetTickCount();	//获取当前系统时间
+		//--------old--------//
+//		IMU_temp_Control(imu_temp);
+//		imu_main();
+		//--------new--------//
+		mpu_get_data();
+		imu_ahrs_update();
+		imu_attitude_update(); 
+//		vTaskDelayUntil(&currentTime, IMU_TASK_PERIOD/portTICK_RATE_MS);
 	}
 }
 

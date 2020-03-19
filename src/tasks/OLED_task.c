@@ -5,7 +5,7 @@
 #include "stdlib.h"
 #include "string.h"
 
-#include "imu.h"
+#include "bsp_imu.h"
 
 uint8_t OLED_Button(void);
 
@@ -27,7 +27,7 @@ static bool goto_submenu=false;
 static bool goto_parentmenu=false;
 static bool option_operat=false;
 
-
+extern imu_t              imu;
 /**
  * @brief OLED½ø³Ìº¯Êý
  * 
@@ -385,8 +385,20 @@ void show_MEMS_hook(void){
 void show_MEMS(void){
 	uint8_t x=2;
 	uint8_t y=3;
-	oled_shownum(x,y,(uint32_t)(imu_yaw_angle/420.0*90.0),0,5);
-	oled_shownum(x+1,y,(uint32_t)imu_temp,0,3);
+	if(imu.yaw<0){
+		oled_showchar(x,y,'-');
+		oled_shownum(x,y+1,(uint32_t)(-imu.yaw),0,5);
+		oled_showchar(x,y+6,'.');
+		oled_shownum(x,y+7,(uint32_t)(-((int)(imu.yaw*1000)%1000)),1,3);
+	}
+	else {
+		oled_shownum(x,y+1,(uint32_t)(imu.yaw),0,5);
+		oled_showchar(x,y+6,'.');
+		oled_shownum(x,y+7,(uint32_t)((int)(imu.yaw*1000)%1000),1,3);
+	}
+	oled_shownum(x+1,y,(uint32_t)imu.temp,0,3);
+	oled_showchar(x+1,y+3,'.');
+	oled_shownum(x+1,y+4,(uint32_t)((int)(imu.temp*1000)%1000),1,3);
 };
 
 void show_motor_state_hook(void* param)

@@ -133,7 +133,7 @@ void GimbalControlModeSwitch(void){
 		case PREPARE_STATE:{
 			GMYPositionPID.ref = 0.0f;
 			GMYPositionPID.fdb = -(GetMotorData(YAW_MOTOR).angle+360*GetMotorData(YAW_MOTOR).cycles)* GMYawRamp.Calc(&GMYawRamp);
-			YawAngleBias = imu_yaw_angle;				///< @brief 获取陀螺仪初始位置
+			YawAngleBias = 0;//imu_yaw_angle;				///< @brief 获取陀螺仪初始位置
 			if(xTaskGetTickCount() > 4000)	///< @brief 让云台进入陀螺仪控制
 				work_state = NORMAL_STATE;
 		}break;

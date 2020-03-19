@@ -23,7 +23,10 @@ void BSP_Init(void)
 	SPI5_Init();   //控制陀螺仪
 
 
-	imu_init();
+//	imu_init();
+	mpu_device_init();
+	init_quaternion();	
+	
 	Judge_Init();
 	//基础硬件初始化
 	Dbus_Init();
