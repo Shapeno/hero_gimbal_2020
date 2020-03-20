@@ -305,11 +305,15 @@ void mpu_get_data()
     mpu_data.gx = ((mpu_buff[8]  << 8 | mpu_buff[9])  - mpu_data.gx_offset);
     mpu_data.gy = ((mpu_buff[10] << 8 | mpu_buff[11]) - mpu_data.gy_offset);
     mpu_data.gz = ((mpu_buff[12] << 8 | mpu_buff[13]) - mpu_data.gz_offset);
-
+	
+	if((imu.pit<5&&imu.pit>-5)&&(imu.rol<5&&imu.rol>-5))
+	{
     ist8310_get_data(ist_buff);
     memcpy(&mpu_data.mx, ist_buff, 6);
+	}
 
     memcpy(&imu.ax, &mpu_data.ax, 6 * sizeof(int16_t));
+
 	
     imu.temp = 21 + mpu_data.temp / 333.87f;
 	  /* 2000dps -> rad/s */

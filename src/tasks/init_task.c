@@ -170,6 +170,7 @@ void IMU_Task(void*p_arg){
 		mpu_get_data();
 		imu_ahrs_update();
 		imu_attitude_update(); 
+		delay_ms(5);
 //		vTaskDelayUntil(&currentTime, IMU_TASK_PERIOD/portTICK_RATE_MS);
 	}
 }

@@ -383,22 +383,112 @@ void show_MEMS_hook(void){
 };
 
 void show_MEMS(void){
-	uint8_t x=2;
-	uint8_t y=3;
-	if(imu.yaw<0){
-		oled_showchar(x,y,'-');
-		oled_shownum(x,y+1,(uint32_t)(-imu.yaw),0,5);
-		oled_showchar(x,y+6,'.');
-		oled_shownum(x,y+7,(uint32_t)(-((int)(imu.yaw*1000)%1000)),1,3);
+	static int scroll=0;
+	uint8_t x=0;
+	uint8_t y=0;
+	if(scroll==0){
+		if(imu.pit<0){
+			oled_showchar(x,y,'p');
+			oled_showchar(x,y+1,':');
+			oled_showchar(x,y+2,'-');
+			oled_shownum(x,y+3,(uint32_t)(-imu.pit),0,4);
+			oled_showchar(x,y+7,'.');
+			oled_shownum(x,y+8,(uint32_t)(-((int)(imu.pit*1000)%1000)),1,3);
+		}
+		else {
+			oled_showchar(x,y,'p');
+			oled_showchar(x,y+1,':');
+			oled_shownum(x,y+3,(uint32_t)(imu.pit),0,4);
+			oled_showchar(x,y+7,'.');
+			oled_shownum(x,y+8,(uint32_t)((int)(imu.pit*1000)%1000),1,3);
+		}
+		if(imu.rol<0){
+			oled_showchar(x+1,y,'r');
+			oled_showchar(x+1,y+1,':');
+			oled_showchar(x+1,y+2,'-');
+			oled_shownum(x+1,y+3,(uint32_t)(-imu.rol),0,4);
+			oled_showchar(x+1,y+7,'.');
+			oled_shownum(x+1,y+8,(uint32_t)(-((int)(imu.rol*1000)%1000)),1,3);
+		}
+		else {
+			oled_showchar(x+1,y,'r');
+			oled_showchar(x+1,y+1,':');
+			oled_shownum(x+1,y+3,(uint32_t)(imu.rol),0,4);
+			oled_showchar(x+1,y+7,'.');
+			oled_shownum(x+1,y+8,(uint32_t)((int)(imu.rol*1000)%1000),1,3);
+		}
+		if(imu.yaw<0){
+			oled_showchar(x+2,y,'y');
+			oled_showchar(x+2,y+1,':');
+			oled_showchar(x+2,y+2,'-');
+			oled_shownum(x+2,y+3,(uint32_t)(-imu.yaw),0,4);
+			oled_showchar(x+2,y+7,'.');
+			oled_shownum(x+2,y+8,(uint32_t)(-((int)(imu.yaw*1000)%1000)),1,3);
+		}
+		else {
+			oled_showchar(x+2,y,'y');
+			oled_showchar(x+2,y+1,':');
+			oled_shownum(x+2,y+3,(uint32_t)(imu.yaw),0,4);
+			oled_showchar(x+2,y+7,'.');
+			oled_shownum(x+2,y+8,(uint32_t)((int)(imu.yaw*1000)%1000),1,3);
+		}
+		oled_showchar(x+3,y,'T');
+		oled_showchar(x+3,y+1,':');
+		oled_shownum(x+3,y+2,(uint32_t)imu.temp,0,3);
+		oled_showchar(x+3,y+5,'.');
+		oled_shownum(x+3,y+6,(uint32_t)((int)(imu.temp*1000)%1000),1,3);
 	}
-	else {
-		oled_shownum(x,y+1,(uint32_t)(imu.yaw),0,5);
-		oled_showchar(x,y+6,'.');
-		oled_shownum(x,y+7,(uint32_t)((int)(imu.yaw*1000)%1000),1,3);
+	else if(scroll==1){
+		oled_showstring(x,y+1,(uint8_t *)"mx");
+		oled_showstring(x+1,y+1,(uint8_t *)"my");
+		oled_showstring(x+2,y+1,(uint8_t *)"mz");
+		if(imu.mx<0){
+			oled_showchar(x,y+3,':');
+			oled_showchar(x,y+4,'-');
+			oled_shownum(x,y+5,-imu.mx,0,4);
+		}
+		else{
+			oled_showchar(x,y+3,':');
+			oled_shownum(x,y+5,imu.mx,0,4);
+		}
+		if(imu.my<0){
+			oled_showchar(x+1,y+3,':');
+			oled_showchar(x+1,y+4,'-');
+			oled_shownum(x+1,y+5,-imu.my,0,4);
+		}
+		else{
+			oled_showchar(x+1,y+3,':');
+			oled_shownum(x+1,y+5,imu.my,0,4);
+		}
+		if(imu.mz<0){
+			oled_showchar(x+2,y+3,':');
+			oled_showchar(x+2,y+4,'-');
+			oled_shownum(x+2,y+5,-imu.mz,0,4);
+		}
+		else{
+			oled_showchar(x+2,y+3,':');
+			oled_shownum(x+2,y+5,imu.mz,0,4);
+		}
+		if(!(imu.pit<5&&imu.pit>-5&&imu.rol<5&&imu.rol>-5))
+		{
+			oled_showchar(0,9,'!');
+			oled_showchar(1,9,'!');
+			oled_showchar(2,9,'!');
+		}
 	}
-	oled_shownum(x+1,y,(uint32_t)imu.temp,0,3);
-	oled_showchar(x+1,y+3,'.');
-	oled_shownum(x+1,y+4,(uint32_t)((int)(imu.temp*1000)%1000),1,3);
+	if(Button_Change){
+		switch (Button_Val)
+		{
+			case 0:;break; 
+			case 1:;break; 									////////                    
+			case 2:;break; 									////////
+			case 3:scroll++;break;		//об
+			case 4:scroll--;break;		//ио
+			case 5:break;
+			default:break;
+		}
+		VAL_LIMIT(scroll,0,1);
+	}
 };
 
 void show_motor_state_hook(void* param)
