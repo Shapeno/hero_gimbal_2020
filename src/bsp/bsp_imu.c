@@ -308,10 +308,12 @@ void mpu_get_data()
     mpu_data.gz = ((mpu_buff[12] << 8 | mpu_buff[13]) - mpu_data.gz_offset);
 	
 //	if((imu.pit<5&&imu.pit>-5)&&(imu.rol<5&&imu.rol>-5))
+//	if(now_update<10000)
 //	{
 //    ist8310_get_data(ist_buff);
 //    memcpy(&mpu_data.mx, ist_buff, 6);
 //	}
+//	else memset(&mpu_data.mx,0,6);
 
     memcpy(&imu.ax, &mpu_data.ax, 6 * sizeof(int16_t));
 
