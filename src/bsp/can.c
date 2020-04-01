@@ -40,6 +40,12 @@ static uint8_t data_CAN2_0x200[8]={0};
 static uint8_t data_CAN2_0x1FF[8]={0};
 static uint8_t data_CAN2_0x2FF[8]={0};
 
+/// @brief 从底盘来获取裁判系统枪口数据
+static gun_data_t Gun_Data={0};
+gun_data_t Get_Gun_Data(){return Gun_Data;}
+/// @brief 从底盘来获取裁判系统机器人状态数据
+static robot_status_t Robot_Status={0};
+robot_status_t Get_Robot_Status(){return Robot_Status;}
 //------------------------------------------------------------
 //电机相关函数
 //------------------------------------------------------------
@@ -337,22 +343,49 @@ void SendMotorCurrent(uint8_t device_seq){
 @param rotate_target		自旋速度
 @param chasis_heat			底盘热量
 */
-void SendChassisSpeed(CAN_TypeDef *CANx, int16_t forward_back_target, int16_t left_right_target, int16_t rotate_target, int16_t chasis_heat){
+void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W){
     CanTxMsg tx_message;
-    tx_message.StdId = 0x401;
+    tx_message.StdId = Gimbal_ID;
     tx_message.IDE = CAN_Id_Standard;
     tx_message.RTR = CAN_RTR_Data;
     tx_message.DLC = 0x08;
-    tx_message.Data[0] = (uint8_t)(forward_back_target >> 8);
-    tx_message.Data[1] = (uint8_t)forward_back_target;
-    tx_message.Data[2] = (uint8_t)(left_right_target >> 8);
-    tx_message.Data[3] = (uint8_t)left_right_target;
-    tx_message.Data[4] = (uint8_t)(rotate_target >> 8);
-    tx_message.Data[5] = (uint8_t)rotate_target;
-    tx_message.Data[6] = (uint8_t)(chasis_heat >> 8);
-    tx_message.Data[7] = (uint8_t)chasis_heat;
+    tx_message.Data[0] = MoveData;
+    tx_message.Data[1] = mode;
+    tx_message.Data[2] = (uint8_t)(Vx >> 8);
+    tx_message.Data[3] = (uint8_t)Vx;
+    tx_message.Data[4] = (uint8_t)(Vy >> 8);
+    tx_message.Data[5] = (uint8_t)Vy;
+    tx_message.Data[6] = (uint8_t)(W >> 8);
+    tx_message.Data[7] = (uint8_t)W;
     CAN_Transmit(CANx,&tx_message);
 }
+
+void RecieveChassisData(CanRxMsg * msg)
+{
+	switch (msg->Data[0])
+	{
+		case GunData:
+		{
+			Gun_Data.bulletFreq=msg->Data[1];
+			Gun_Data.bulletSpeed=(msg->Data[2]<<24)|(msg->Data[3]<<16)|(msg->Data[4]<<8)|msg->Data[5];
+			Gun_Data.shooterHeat=(msg->Data[6]<<8)|msg->Data[7];
+		}break;
+		case RoboStateData:
+		{
+			Robot_Status.robot_id=msg->Data[1];
+			Robot_Status.robot_level=msg->Data[2];
+			Robot_Status.gun_cooling_rate=(msg->Data[3]<<8)|msg->Data[4];
+			Robot_Status.gun_cooling_limit=(msg->Data[5]<<8)|msg->Data[6];
+			Robot_Status.gun_speed_limit=msg->Data[7];
+		}break;
+		
+	}
+	
+}
+
+
+
+
 //------------------------------------------------------------
 //初始化函数
 //------------------------------------------------------------
@@ -480,6 +513,9 @@ void angle_convert(uint8_t seq);
 
 void can_msg_encode( CanRxMsg * msg, Can_Channel_e CAN_x){
 	int i=0;
+	///接收底盘数据
+	if(msg->StdId==Chassis_ID)RecieveChassisData(msg);
+	///接收电机数据
 	for(;i<CAN_DEVICE_NUM;i++){
 		if(can_cfg_info[i].ch==CAN_x){
 			if(msg->StdId==can_cfg_info[i].id_recieve){
