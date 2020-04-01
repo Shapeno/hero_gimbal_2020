@@ -72,6 +72,8 @@
 #define RAMMER_MOTOR_CH			
 #define RAMMER_MOTOR_BIAS		0
 
+#define Chassis_ID	0x402
+#define Gimbal_ID	0x401
 
 //------------------------------------------------------------
 //枚举类型与数据结构体定义
@@ -130,6 +132,45 @@ typedef struct
 	int16_t  torque;
 	int8_t  temperature;		
 }Motor_Data_t;
+/**
+ * @brief 接收底盘信息的命令码
+ * 
+ */
+typedef enum
+{
+	MoveData = 0x00,
+}Gimbal_Command_ID_e;
+/**
+ * @brief 
+ * 
+ */
+typedef enum
+{
+	GunData 	= 	0x01,
+	RoboStateData =	0x02,
+}Chassis_Command_ID_e;
+/**
+ * @brief 裁判系统的枪口数据
+ * 
+ */
+typedef __packed struct
+{
+    uint8_t 	bulletFreq;
+    float  	bulletSpeed;
+    uint16_t   shooterHeat;
+}gun_data_t;
+/**
+ * @brief 裁判系统机器人状态数据
+ * 
+ */
+typedef __packed struct
+{
+    uint8_t 	robot_id;
+    uint8_t 	robot_level;
+    uint16_t 	gun_cooling_rate;
+    uint16_t	gun_cooling_limit;
+    uint8_t 	gun_speed_limit;
+}robot_status_t;
 
 void CAN1_Init(void);
 void CAN2_Init(void);
@@ -141,6 +182,8 @@ Motor_Data_t GetMotorData(uint8_t device_seq);
 void SetMotorCurrent(uint8_t device_seq, int16_t current);
 void SendMotorCurrent(uint8_t device_seq);
 
-void SendChassisSpeed(CAN_TypeDef *CANx, int16_t forward_back_target, int16_t left_right_target, int16_t rotate_target, int16_t chasis_heat);
+void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W);
+gun_data_t Get_Gun_Data();
+robot_status_t Get_Robot_Status();
 
 #endif 
