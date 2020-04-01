@@ -18,8 +18,8 @@ extern PID_Regulator_t HFric1_SpeedPID;
 extern PID_Regulator_t HFric2_SpeedPID;
 
 void MonitorPrc(void){
-	printf("%d \r\n",(int)GetMotorData(PIT_MOTOR).angle+100);
-#if Monitor_Time_Stack//打印到上位机
+//	printf("%d \r\n",(int)GetMotorData(PIT_MOTOR).angle+100);
+#if Monitor_Task_Time//打印到上位机
 	ShowRunTimeStats();
 #endif
 #if Monitor_Task_Stack//打印到上位机
