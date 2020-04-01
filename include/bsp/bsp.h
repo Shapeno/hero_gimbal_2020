@@ -26,7 +26,7 @@
 #include "power.h"
 #include "can.h"
 #include "timer.h"
-#include "imu.h"
+#include "bsp_imu.h"
 #include "spi.h"
 #include "gun.h"
 
