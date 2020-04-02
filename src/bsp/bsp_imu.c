@@ -43,6 +43,7 @@ uint8_t               mpu_buff[14];                          /* buffer to save i
 uint8_t               ist_buff[6];                           /* buffer to save IST8310 raw data */
 mpu_data_t            mpu_data;
 imu_t                 imu={0};
+imu_t Get_IMU_data(){return imu;}
 
 /**
   * @brief  fast inverse square-root, to calculate 1/Sqrt(x)
@@ -306,11 +307,18 @@ void mpu_get_data()
     mpu_data.gy = ((mpu_buff[10] << 8 | mpu_buff[11]) - mpu_data.gy_offset);
     mpu_data.gz = ((mpu_buff[12] << 8 | mpu_buff[13]) - mpu_data.gz_offset);
 	
-	if((imu.pit<5&&imu.pit>-5)&&(imu.rol<5&&imu.rol>-5))
-	{
-    ist8310_get_data(ist_buff);
-    memcpy(&mpu_data.mx, ist_buff, 6);
-	}
+//	if((imu.pit<5&&imu.pit>-5)&&(imu.rol<5&&imu.rol>-5))
+//	{
+//    ist8310_get_data(ist_buff);
+//	mpu_data.my=ist_buff[0]|(ist_buff[1]<<8);
+//	mpu_data.mx=-ist_buff[2]|(ist_buff[3]<<8);
+//	mpu_data.mz=-ist_buff[4]|(ist_buff[5]<<8);
+//	mpu_data.mx=ist_buff[0]|(ist_buff[1]<<8);
+//	mpu_data.my=ist_buff[2]|(ist_buff[3]<<8);
+//	mpu_data.mz=ist_buff[4]|(ist_buff[5]<<8);
+//    memcpy(&mpu_data.mx, ist_buff, 6);
+//	}
+	
 
     memcpy(&imu.ax, &mpu_data.ax, 6 * sizeof(int16_t));
 
@@ -693,5 +701,15 @@ void imu_attitude_update(void)
 	imu.pit = -asin(-2*q1*q3 + 2*q0*q2)* 57.3;   
 	/* roll   -pi----pi  */	
 	imu.rol =  atan2(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1)* 57.3;
+	
+	//yaw轴角度连续化Continuous angle range
+	{
+		static float yaw_last=0;
+		static long int circle=0;
+		if ((yaw_last-imu.yaw)>300)circle++;
+		if ((yaw_last-imu.yaw)<-300)circle--;
+		yaw_last=imu.yaw;
+		imu.yaw=imu.yaw+360.0*circle;
+	}
 }
 

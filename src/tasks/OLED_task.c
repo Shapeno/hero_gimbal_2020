@@ -27,7 +27,6 @@ static bool goto_submenu=false;
 static bool goto_parentmenu=false;
 static bool option_operat=false;
 
-extern imu_t              imu;
 /**
  * @brief OLED½ø³Ìº¯Êý
  * 
@@ -387,89 +386,89 @@ void show_MEMS(void){
 	uint8_t x=0;
 	uint8_t y=0;
 	if(scroll==0){
-		if(imu.pit<0){
+		if(Get_IMU_data().pit<0){
 			oled_showchar(x,y,'p');
 			oled_showchar(x,y+1,':');
 			oled_showchar(x,y+2,'-');
-			oled_shownum(x,y+3,(uint32_t)(-imu.pit),0,4);
+			oled_shownum(x,y+3,(uint32_t)(-Get_IMU_data().pit),0,4);
 			oled_showchar(x,y+7,'.');
-			oled_shownum(x,y+8,(uint32_t)(-((int)(imu.pit*1000)%1000)),1,3);
+			oled_shownum(x,y+8,(uint32_t)(-((int)(Get_IMU_data().pit*1000)%1000)),1,3);
 		}
 		else {
 			oled_showchar(x,y,'p');
 			oled_showchar(x,y+1,':');
-			oled_shownum(x,y+3,(uint32_t)(imu.pit),0,4);
+			oled_shownum(x,y+3,(uint32_t)(Get_IMU_data().pit),0,4);
 			oled_showchar(x,y+7,'.');
-			oled_shownum(x,y+8,(uint32_t)((int)(imu.pit*1000)%1000),1,3);
+			oled_shownum(x,y+8,(uint32_t)((int)(Get_IMU_data().pit*1000)%1000),1,3);
 		}
-		if(imu.rol<0){
+		if(Get_IMU_data().rol<0){
 			oled_showchar(x+1,y,'r');
 			oled_showchar(x+1,y+1,':');
 			oled_showchar(x+1,y+2,'-');
-			oled_shownum(x+1,y+3,(uint32_t)(-imu.rol),0,4);
+			oled_shownum(x+1,y+3,(uint32_t)(-Get_IMU_data().rol),0,4);
 			oled_showchar(x+1,y+7,'.');
-			oled_shownum(x+1,y+8,(uint32_t)(-((int)(imu.rol*1000)%1000)),1,3);
+			oled_shownum(x+1,y+8,(uint32_t)(-((int)(Get_IMU_data().rol*1000)%1000)),1,3);
 		}
 		else {
 			oled_showchar(x+1,y,'r');
 			oled_showchar(x+1,y+1,':');
-			oled_shownum(x+1,y+3,(uint32_t)(imu.rol),0,4);
+			oled_shownum(x+1,y+3,(uint32_t)(Get_IMU_data().rol),0,4);
 			oled_showchar(x+1,y+7,'.');
-			oled_shownum(x+1,y+8,(uint32_t)((int)(imu.rol*1000)%1000),1,3);
+			oled_shownum(x+1,y+8,(uint32_t)((int)(Get_IMU_data().rol*1000)%1000),1,3);
 		}
-		if(imu.yaw<0){
+		if(Get_IMU_data().yaw<0){
 			oled_showchar(x+2,y,'y');
 			oled_showchar(x+2,y+1,':');
 			oled_showchar(x+2,y+2,'-');
-			oled_shownum(x+2,y+3,(uint32_t)(-imu.yaw),0,4);
+			oled_shownum(x+2,y+3,(uint32_t)(-Get_IMU_data().yaw),0,4);
 			oled_showchar(x+2,y+7,'.');
-			oled_shownum(x+2,y+8,(uint32_t)(-((int)(imu.yaw*1000)%1000)),1,3);
+			oled_shownum(x+2,y+8,(uint32_t)(-((int)(Get_IMU_data().yaw*1000)%1000)),1,3);
 		}
 		else {
 			oled_showchar(x+2,y,'y');
 			oled_showchar(x+2,y+1,':');
-			oled_shownum(x+2,y+3,(uint32_t)(imu.yaw),0,4);
+			oled_shownum(x+2,y+3,(uint32_t)(Get_IMU_data().yaw),0,4);
 			oled_showchar(x+2,y+7,'.');
-			oled_shownum(x+2,y+8,(uint32_t)((int)(imu.yaw*1000)%1000),1,3);
+			oled_shownum(x+2,y+8,(uint32_t)((int)(Get_IMU_data().yaw*1000)%1000),1,3);
 		}
 		oled_showchar(x+3,y,'T');
 		oled_showchar(x+3,y+1,':');
-		oled_shownum(x+3,y+2,(uint32_t)imu.temp,0,3);
+		oled_shownum(x+3,y+2,(uint32_t)Get_IMU_data().temp,0,3);
 		oled_showchar(x+3,y+5,'.');
-		oled_shownum(x+3,y+6,(uint32_t)((int)(imu.temp*1000)%1000),1,3);
+		oled_shownum(x+3,y+6,(uint32_t)((int)(Get_IMU_data().temp*1000)%1000),1,3);
 	}
 	else if(scroll==1){
 		oled_showstring(x,y+1,(uint8_t *)"mx");
 		oled_showstring(x+1,y+1,(uint8_t *)"my");
 		oled_showstring(x+2,y+1,(uint8_t *)"mz");
-		if(imu.mx<0){
+		if(Get_IMU_data().mx<0){
 			oled_showchar(x,y+3,':');
 			oled_showchar(x,y+4,'-');
-			oled_shownum(x,y+5,-imu.mx,0,4);
+			oled_shownum(x,y+5,-Get_IMU_data().mx,0,4);
 		}
 		else{
 			oled_showchar(x,y+3,':');
-			oled_shownum(x,y+5,imu.mx,0,4);
+			oled_shownum(x,y+5,Get_IMU_data().mx,0,4);
 		}
-		if(imu.my<0){
+		if(Get_IMU_data().my<0){
 			oled_showchar(x+1,y+3,':');
 			oled_showchar(x+1,y+4,'-');
-			oled_shownum(x+1,y+5,-imu.my,0,4);
+			oled_shownum(x+1,y+5,-Get_IMU_data().my,0,4);
 		}
 		else{
 			oled_showchar(x+1,y+3,':');
-			oled_shownum(x+1,y+5,imu.my,0,4);
+			oled_shownum(x+1,y+5,Get_IMU_data().my,0,4);
 		}
-		if(imu.mz<0){
+		if(Get_IMU_data().mz<0){
 			oled_showchar(x+2,y+3,':');
 			oled_showchar(x+2,y+4,'-');
-			oled_shownum(x+2,y+5,-imu.mz,0,4);
+			oled_shownum(x+2,y+5,-Get_IMU_data().mz,0,4);
 		}
 		else{
 			oled_showchar(x+2,y+3,':');
-			oled_shownum(x+2,y+5,imu.mz,0,4);
+			oled_shownum(x+2,y+5,Get_IMU_data().mz,0,4);
 		}
-		if(!(imu.pit<5&&imu.pit>-5&&imu.rol<5&&imu.rol>-5))
+		if(!(Get_IMU_data().pit<5&&Get_IMU_data().pit>-5&&Get_IMU_data().rol<5&&Get_IMU_data().rol>-5))
 		{
 			oled_showchar(0,9,'!');
 			oled_showchar(1,9,'!');

@@ -65,8 +65,7 @@ typedef struct
 	float yaw;
 } imu_t;
 
-extern mpu_data_t mpu_data;
-extern imu_t      imu;
+imu_t Get_IMU_data();
 
 uint8_t   mpu_device_init(void);
 void init_quaternion(void);
