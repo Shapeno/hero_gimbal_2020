@@ -696,5 +696,15 @@ void imu_attitude_update(void)
 	imu.pit = -asin(-2*q1*q3 + 2*q0*q2)* 57.3;   
 	/* roll   -pi----pi  */	
 	imu.rol =  atan2(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1)* 57.3;
+
+	//yaw轴角度连续化Continuous angle range
+	{
+		static float yaw_last=0;
+		static long int circle=0;
+		if ((yaw_last-imu.yaw)>300)circle++;
+		if ((yaw_last-imu.yaw)<-300)circle--;
+		yaw_last=imu.yaw;
+		imu.yaw=imu.yaw+360.0*circle;
+	}
 }
 
