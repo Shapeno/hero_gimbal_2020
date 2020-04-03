@@ -162,12 +162,14 @@ void MouseKeyCmdPrc(Mouse_Data_t *mouse, Key_Data_t *key){
 		ChassisSpeed_Target.forward_back_target	=	-key->S * HIGH_FORWARD_BACK_SPEED;
 		ChassisSpeed_Target.left_right_target	=	key->D * HIGH_LEFT_RIGHT_SPEED;
 		ChassisSpeed_Target.left_right_target	=	-key->A * HIGH_LEFT_RIGHT_SPEED;
+		ChassisSpeed_Target.rotate_target		=	mouse->x * MOUSE_TO_ROTATE_INC_FACT;
 	}
 	else{
 		ChassisSpeed_Target.forward_back_target	=	key->W * NORMAL_FORWARD_BACK_SPEED;
 		ChassisSpeed_Target.forward_back_target	=	-key->S * NORMAL_FORWARD_BACK_SPEED;
 		ChassisSpeed_Target.left_right_target	=	key->D * NORMAL_LEFT_RIGHT_SPEED;
 		ChassisSpeed_Target.left_right_target	=	-key->A * NORMAL_LEFT_RIGHT_SPEED;
+		ChassisSpeed_Target.rotate_target		=	mouse->x * MOUSE_TO_ROTATE_INC_FACT;
 	}
 	///<云台目标位置
 	VAL_LIMIT(mouse->x, -150, 150);

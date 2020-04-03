@@ -608,9 +608,9 @@
               <FilePath>..\src\bsp\dbus.c</FilePath>
             </File>
             <File>
-              <FileName>gun.c</FileName>
+              <FileName>switch.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\bsp\gun.c</FilePath>
+              <FilePath>..\src\bsp\switch.c</FilePath>
             </File>
             <File>
               <FileName>laser.c</FileName>

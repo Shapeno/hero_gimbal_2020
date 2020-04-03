@@ -17,11 +17,14 @@
 *----------------------------------------------------------------------------*
 *  2019/09/18 | 1.0.1.1   | DengXY	       | Function test                   *
 *----------------------------------------------------------------------------*
+*  2020/04/04 | 1.0.2.1   | DengXY	       | 修改YAW控制逻辑，所有极性必须重 *
+*			  | 	      | 		       | 新调试                    		 *
+*----------------------------------------------------------------------------*
 *                                                                            *
 *****************************************************************************/
 #include "sys.h"
 #include "bsp.h"
-#include "gun.h"
+#include "switch.h"
 
 #include "ramp.h"
 #include "pid_regulator.h"
@@ -29,7 +32,7 @@
 #include "judge_task.h"
 #include "command_task.h"
 #include "can_task.h"
-#include "main.h"
+#include <main.h>
 
 /// @brief PID初始化
 PID_Regulator_t GMPPositionPID    = GIMBAL_MOTOR_PITCH_POSITION_PID_DEFAULT;     
@@ -55,15 +58,26 @@ static WorkState_e work_state_last = PREPARE_STATE;
 static WorkState_e work_state     = PREPARE_STATE;
 	void SetWorkState(WorkState_e state){if(work_state!=PREPARE_STATE)work_state=state;}
 	WorkState_e GetWorkState(void){return work_state;}
-/// @biref	启动大摩擦轮
+/// @brief	准备模式获取码盘角度范围
+static bool start_pre_rotate=false;
+	void Start_Pre_Rotate(void){start_pre_rotate=true;}
+/// @brief	yaw轴重映射数据
+static int16_t remap_pos=0;
+static int16_t remap_cycle=0;
+static int16_t remap_angle=0;
+static int16_t remapped_yaw_cycle=0;
+	int16_t Get_Rremap_Yaw_Cycle(void){return remapped_yaw_cycle;}
+static float remapped_yaw_angle=0;///角度范围-180~180
+	float Get_Rremap_Yaw_Angle(void){return remapped_yaw_angle;}
+/// @brief	启动大摩擦轮
 static bool big_fric=false;
 	void StartBigFric(void){big_fric=true;}
 	void StopBigFric(void){big_fric=false;}
-/// @biref	单发射击模式
+/// @brief	单发射击模式
 static bool single_shoot_mode=false;
 	void SetSingleShootMode(bool flag){single_shoot_mode=flag;}
 	
-/// @biref	射击命令(单发模式下需要置零后才能射击)
+/// @brief	射击命令(单发模式下需要置零后才能射击)
 static bool shoot=false;
 	void ShootCMD(bool flag){shoot=flag;}
 	
@@ -114,6 +128,7 @@ void ControlVariableInit(void){
 
 /// @brief 控制主程序
 void ControlPrc(void){
+	if(Reach_Reset_Pos()==2)Remapping_Yaw_Angle();
 	GimbalControlModeSwitch();
 	GMPitchControlLoop();
 	GMYawControlLoop();
@@ -123,34 +138,69 @@ void ControlPrc(void){
 //	BigBulletRammer_Control_Prc();
 }
 
+static float YawAngleBias = 0.0f;
+static float YawTargetBias = 0.0f;
+static float YawRemappedBias = 0.0f;
 /// @brief 云台不同模式控制
-void GimbalControlModeSwitch(void){
-	work_state_last=work_state;
-	static float YawAngleBias = 0.0f;
+static void GimbalControlModeSwitch(void){
 	/*mode changed*/
 	if(work_state!=work_state_last)
 		WorkStateChange();
+	work_state_last=work_state;
+	
 	switch(GetWorkState()){
+	/*start up mode*/
+		case STARTUP_STATE:{
+			GMYPositionPID.ref = 0.0f;
+			GMYPositionPID.fdb = 0.0f;//-(GetMotorData(YAW_MOTOR).angle+360*GetMotorData(YAW_MOTOR).cycles)* GMYawRamp.Calc(&GMYawRamp);
+			if(xTaskGetTickCount() > STARTUP_TIME)	///< @brief 让云台进入陀螺仪控制
+				work_state = PREPARE_STATE;
+		}break;
 	/*prepare mode*/
 		case PREPARE_STATE:{
-			GMYPositionPID.ref = 0.0f;
-			GMYPositionPID.fdb = -(GetMotorData(YAW_MOTOR).angle+360*GetMotorData(YAW_MOTOR).cycles)* GMYawRamp.Calc(&GMYawRamp);
-			YawAngleBias = Get_IMU_data().yaw;				///< @brief 获取陀螺仪初始位置
-			if(xTaskGetTickCount() > 4000)	///< @brief 让云台进入陀螺仪控制
-				work_state = NORMAL_STATE;
+			GMYPositionPID.ref=GetGimbalTarget().yaw_angle_target;
+			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
+			//get the Encoder range
+			/////what if the switch is somethong wrong/////
+			if(start_pre_rotate){
+				//>第一次复位位置
+				static int16_t reset_pos_1=0;
+				static int16_t Reset_Cycle_1=0;
+				SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,CHASSIS_ROTATE_SPEED);
+				if(Reach_Reset_Pos()==1)
+				{
+					reset_pos_1=GetMotorData(YAW_MOTOR,false).ecd_angle;
+					Reset_Cycle_1=GetMotorData(YAW_MOTOR,false).cycles;
+				}
+				//第二次复位
+				if(Reach_Reset_Pos()==2)
+				{
+					remap_pos=GetMotorData(YAW_MOTOR,false).ecd_angle;			//>由于remap_pos=reset_pos_angle_2;所以省去reset_pos_angle_2变量
+					remap_cycle=GetMotorData(YAW_MOTOR,false).cycles;	//>remap_cycle=reset_pos_cycle_2;所以省去reset_pos_cycle_2变量
+					remap_angle=remap_pos-reset_pos_1+Full_Ecd_Angle*(remap_cycle-Reset_Cycle_1);  //绝对值
+					remap_angle=remap_angle>0?remap_angle:-remap_angle;
+					work_state = FOLLOW_UP_STATE;
+				}
+			}	
 		}break;
-	/*nomal mode*/
-		case NORMAL_STATE:{
-			if((GetGimbalTarget().yaw_angle_target-GMYPositionPID.ref)>INTEGRAL_THRESHOLD)
-				GMYPositionPID.ref += INTEGRAL_SLOPE;
-			else if((GetGimbalTarget().yaw_angle_target-GMYPositionPID.ref)<-INTEGRAL_THRESHOLD)
-				GMYPositionPID.ref -= INTEGRAL_SLOPE;
-			else GMYPositionPID.ref=GetGimbalTarget().yaw_angle_target;
-//			GMYPositionPID.fdb = -(imu_yaw_angle-YawAngleBias);
-			GMYPositionPID.fdb = -(GetMotorData(YAW_MOTOR).angle+360*GetMotorData(YAW_MOTOR).cycles);
+	/*follow up mode*/
+		case FOLLOW_UP_STATE:{
+			GMYPositionPID.ref = 0;
+			GMYPositionPID.fdb = remapped_yaw_angle;
+			SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,GetChassisSpeedTarget().rotate_target);
 		}break;
-		case AUTOAIM_STATE:{}break;
-		case BS_STATE:{}break;
+	/*free view mode*/
+		case FREE_VIEW_STATE:{
+			GMYPositionPID.ref = (GetGimbalTarget().yaw_angle_target-YawTargetBias);
+			GMYPositionPID.fdb = (remapped_yaw_angle+360*remapped_yaw_cycle-YawRemappedBias);
+			SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,0);
+		}break;
+	/*chassis rotate mode*/
+		case CHASSIS_ROTATE_STATE:{
+			GMYPositionPID.ref = (GetGimbalTarget().yaw_angle_target-YawTargetBias);
+			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
+			SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,CHASSIS_ROTATE_SPEED);
+		}break;
 		case STOP_STATE:{}break;
 	}
 }
@@ -158,30 +208,32 @@ void GimbalControlModeSwitch(void){
 /** 
 @brief 运行状态改变时运行
 */
-void WorkStateChange(void){
-	
+static void WorkStateChange(void){
+	YawAngleBias = Get_IMU_data().yaw;					///< @brief 获取陀螺仪初始位置
+	YawTargetBias = GetGimbalTarget().yaw_angle_target; ///< @brief 获取YAW目标值初始位置
+	YawRemappedBias = (remapped_yaw_angle+360*remapped_yaw_cycle);
 }
 
 /** 
 @brief Pitch控制环
 */
-void GMPitchControlLoop(void){
-	GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
-	GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR).angle+360*GetMotorData(PIT_MOTOR).cycles) * GMPitchRamp.Calc(&GMPitchRamp);
+static void GMPitchControlLoop(void){
+//	GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
+//	GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR).angle+360*GetMotorData(PIT_MOTOR).cycles) * GMPitchRamp.Calc(&GMPitchRamp);
 	GMPPositionPID.Calc(&GMPPositionPID);
 }
 
 /** 
 @brief Yaw控制环
 */
-void GMYawControlLoop(void){
+static void GMYawControlLoop(void){
 	GMYPositionPID.Calc(&GMYPositionPID);
 }
 
 /** 
 @brief 云台电机输出
 */
-void GimbalMotorOutput(void){
+static void GimbalMotorOutput(void){
 	SetMotorCurrent(YAW_MOTOR,GMYPositionPID.output);
 	SetMotorCurrent(PIT_MOTOR,GMPPositionPID.output);
 }
@@ -190,15 +242,37 @@ void GimbalMotorOutput(void){
 /** 
 @brief 底盘控制程序
 */
-void CMControlLoop(void){
+static void CMControlLoop(void){
 
 }
 
+/** 
+@brief 重映射角度范围
+*/
+static void Remapping_Yaw_Angle(void){
+	static uint32_t temp=0;
+	//计算圈数和连续的总角度0~8912：0~360°
+	if((GetMotorData(YAW_MOTOR,false).ecd_angle-GetMotorData(YAW_MOTOR,true).ecd_angle)>7000)
+		remapped_yaw_cycle--;
+	else if((GetMotorData(YAW_MOTOR,false).ecd_angle-GetMotorData(YAW_MOTOR,true).ecd_angle)<-7000)
+		remapped_yaw_cycle++;
+	temp=GetMotorData(YAW_MOTOR,false).ecd_angle+Full_Ecd_Angle*remapped_yaw_cycle;
+	//角度映射到-180~180范围，并修正圈数
+	remapped_yaw_angle=(temp%(int)Full_Ecd_Angle)*360.0/Full_Ecd_Angle;
+	if(remapped_yaw_angle>180){
+		remapped_yaw_cycle++;
+		remapped_yaw_angle-=360.0;
+	}
+	else if(remapped_yaw_angle<-180){
+		remapped_yaw_cycle--;
+		remapped_yaw_angle+=360.0;
+	}
+}
 
 /** 
 @brief 射击限制的选择(通过裁判系统读取等级，根据规则自己设定)
 */
-void ShootLimitSwitch(void){
+static void ShootLimitSwitch(void){
 	switch (JUDGE_GET_Hero_LevelData()){
 		case 1:{
 			HeatLimit = 90;
@@ -232,7 +306,7 @@ void ShootLimitSwitch(void){
 */
 void BigBulletRammer_Control_Prc(void){
 	BigRammerPID.ref=-36*10;
-	BigRammerPID.fdb=GetMotorData(RAMMER_MOTOR).speed;
+	BigRammerPID.fdb=GetMotorData(RAMMER_MOTOR,false).speed;
 	BigRammerPID.Calc(&BigRammerPID);
 	SetMotorCurrent(RAMMER_MOTOR,BigRammerPID.output);
 	//SendMotorCurrent(RAMMER_MOTOR);
@@ -251,7 +325,7 @@ void BigBulletFric_Control_Prc(void){
 	static bool photo_switch;///<枪管光电开关是否被照射
 	static bool photo_switch_last;///<枪管光电开关上一次状态
 	
-	photo_switch=PHOTO_SWITCH;
+	photo_switch=GUN_SWITCH;
 	if(photo_switch==1)LED_A=LED_OFF;
 	else LED_A=LED_ON;
 	///<小摩擦轮控制
@@ -266,12 +340,12 @@ void BigBulletFric_Control_Prc(void){
 				}
 				else if(photo_switch_last==BULLET_IN_PLACE){///<控制位置把弹卡住
 					if(first_stop==false){
-						VFric_PositionPID.ref = GetMotorData(FRIC_MID_MOTOR).angle + GetMotorData(FRIC_MID_MOTOR).cycles*360;
+						VFric_PositionPID.ref = GetMotorData(FRIC_MID_MOTOR,false).angle + GetMotorData(FRIC_MID_MOTOR,false).cycles*360;
 						if(bullet_stucked_after_boot_up==false)VFric_PositionPID.ref += 0;//360*6;///<若开机未卡弹则加前推量
 						first_stop=true;
 					}
 					else{
-						VFric_PositionPID.fdb=GetMotorData(FRIC_MID_MOTOR).angle + GetMotorData(FRIC_MID_MOTOR).cycles*360;
+						VFric_PositionPID.fdb=GetMotorData(FRIC_MID_MOTOR,false).angle + GetMotorData(FRIC_MID_MOTOR,false).cycles*360;
 						VFric_PositionPID.Calc(&VFric_PositionPID);
 						HFric_SpeedPID.ref=VFric_PositionPID.output;
 					}
@@ -293,12 +367,12 @@ void BigBulletFric_Control_Prc(void){
 			}
 			else if(photo_switch_last==BULLET_IN_PLACE){///<控制位置把弹卡住
 				if(first_stop==false){
-					VFric_PositionPID.ref=GetMotorData(FRIC_MID_MOTOR).angle + GetMotorData(FRIC_MID_MOTOR).cycles*360;
+					VFric_PositionPID.ref=GetMotorData(FRIC_MID_MOTOR,false).angle + GetMotorData(FRIC_MID_MOTOR,false).cycles*360;
 					if(bullet_stucked_after_boot_up==false)VFric_PositionPID.ref += 360*6;///<若开机未卡弹则加前推量
 					first_stop=true;
 				}
 				else{
-					VFric_PositionPID.fdb=GetMotorData(FRIC_MID_MOTOR).angle + GetMotorData(FRIC_MID_MOTOR).cycles*360;
+					VFric_PositionPID.fdb=GetMotorData(FRIC_MID_MOTOR,false).angle + GetMotorData(FRIC_MID_MOTOR,false).cycles*360;
 					VFric_PositionPID.Calc(&VFric_PositionPID);
 					HFric_SpeedPID.ref=VFric_PositionPID.output;
 				}
@@ -316,7 +390,7 @@ void BigBulletFric_Control_Prc(void){
 				on_shooting=false;
 			}
 	}
-	HFric_SpeedPID.fdb=GetMotorData(FRIC_MID_MOTOR).speed;
+	HFric_SpeedPID.fdb=GetMotorData(FRIC_MID_MOTOR,false).speed;
 	HFric_SpeedPID.Calc(&HFric_SpeedPID);
 	SetMotorCurrent(FRIC_MID_MOTOR,HFric_SpeedPID.output);
 	
@@ -329,8 +403,8 @@ void BigBulletFric_Control_Prc(void){
 		VFric1_SpeedPID.ref=0;
 		VFric2_SpeedPID.ref=0;
 	}
-	VFric1_SpeedPID.fdb=GetMotorData(FRIC_UP_MOTOR).speed;
-	VFric2_SpeedPID.fdb=GetMotorData(FRIC_DOWN_MOTOR).speed;
+	VFric1_SpeedPID.fdb=GetMotorData(FRIC_UP_MOTOR,false).speed;
+	VFric2_SpeedPID.fdb=GetMotorData(FRIC_DOWN_MOTOR,false).speed;
 	VFric1_SpeedPID.Calc(&VFric1_SpeedPID);
 	VFric2_SpeedPID.Calc(&VFric2_SpeedPID);
 	SetMotorCurrent(FRIC_UP_MOTOR,VFric1_SpeedPID.output);

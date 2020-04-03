@@ -178,12 +178,14 @@ void CAN_id_send_Print(void){
 /**
 @brief 获取电机的数据
 @param device_seq必须是电机的设备序列号
+@param last_data:false-当前数据，true-上一次数据
 @return 设备对应的Motor_Data_t类型的数据，
 	所有电机都有角度信息，但不是都有其他信息
 	详细参考Motor_Data_t结构体注释
 */
-Motor_Data_t GetMotorData(uint8_t device_seq){
+Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data){
 	if(can_cfg_info[device_seq-1].type>Chassis){
+		if(last_data)return motor_last_data[device_seq-1];
 		return motor_data[device_seq-1];
 	}
 	else {

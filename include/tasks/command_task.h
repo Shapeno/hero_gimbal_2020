@@ -20,6 +20,8 @@
 #define HIGH_LEFT_RIGHT_SPEED   			      230
 #define SUPER_HIGH_FORWARD_BACK_SPEED 			414
 #define SUPER_HIGH_LEFT_RIGHT_SPEED   			414
+#define MOUSE_TO_ROTATE_INC_FACT				1
+
 
 ///	@brief	输入模式枚举
 typedef enum{
@@ -39,7 +41,6 @@ typedef __packed struct{
 	int16_t forward_back_target;
 	int16_t left_right_target;
 	int16_t rotate_target;
-	int16_t rotate_target360;
 }ChassisSpeed_Target_t;
 
 //------------------------------------------------------------
