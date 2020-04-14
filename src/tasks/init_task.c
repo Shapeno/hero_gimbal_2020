@@ -9,6 +9,7 @@
 #include "can_task.h"
 #include "monitor_task.h"
 #include "OLED_task.h"
+#include "USB_task.h"
 #include "usmart.h"
 //#include "timer.h"
 //#include "usart7.h"
@@ -60,6 +61,12 @@ void Monitor_Task(void*p_arg);			//任务函数
 #define OLED_TASK_PERIOD 5			//任务运行周期ms
 TaskHandle_t OLED_Task_Handler;		//任务句柄
 void OLED_Task(void*p_arg);			//任务函数
+//USB任务
+#define USB_TASK_PRIO	2			//任务优先级
+#define USB_STK_SIZE	512			//任务堆栈大小
+#define USB_TASK_PERIOD 1			//任务运行周期ms
+TaskHandle_t USB_Task_Handler;		//任务句柄
+void USB_Task(void*p_arg);			//任务函数
 //LED显示任务是否在运行
 #define RUNNING_TASK_PRIO	2			//任务优先级
 #define RUNNING_STK_SIZE	50			//任务堆栈大小
@@ -118,6 +125,13 @@ void Task_Init(void){
 				(void*			)NULL,
 				(UBaseType_t	)OLED_TASK_PRIO,
 				(TaskHandle_t*	)&OLED_Task_Handler);
+				
+	xTaskCreate((TaskFunction_t	)USB_Task,
+				(const char*	)"USB_Task",
+				(uint16_t		)USB_STK_SIZE,
+				(void*			)NULL,
+				(UBaseType_t	)USB_TASK_PRIO,
+				(TaskHandle_t*	)&USB_Task_Handler);
 				
 	xTaskCreate((TaskFunction_t	)Running_Task,
 				(const char*	)"Running_Task",
@@ -223,6 +237,17 @@ void OLED_Task(void*p_arg){
 		OLED_Prc();
 		
 		vTaskDelayUntil(&currentTime, OLED_TASK_PERIOD/portTICK_RATE_MS);
+	}
+}
+
+void USB_Task(void*p_arg){
+	portTickType currentTime;
+	while(1){
+		currentTime = xTaskGetTickCount();	//获取当前系统时间
+		
+		USB_Prc();
+		
+		vTaskDelayUntil(&currentTime, USB_TASK_PERIOD/portTICK_RATE_MS);
 	}
 }
 /**	

@@ -10,6 +10,7 @@
 #include "oled.h"
 #include "adc.h"
 #include "main.h"
+#include "usbd_cdc_vcp.h"
 //------------------------------------------------------------
 //°å¼¶Ö§³Ö
 //------------------------------------------------------------
@@ -50,6 +51,7 @@ void BSP_Init(void)
 	oled_init();
 	OLED_Button_ADC_init();
 	menu_init();
+	usbd_cdc_vcp_Init();
 }
 void BSP_Pre_Init(void){
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
