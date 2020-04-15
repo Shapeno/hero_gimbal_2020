@@ -8,7 +8,9 @@
 #include "usmart.h"
 #include "OLED_task.h"
 #include "oled.h"
+#include "adc.h"
 #include "main.h"
+
 //------------------------------------------------------------
 //°å¼¶Ö§³Ö
 //------------------------------------------------------------
@@ -32,6 +34,7 @@ void BSP_Init(void)
 	Laser_Init();
 //	BEEP_Init();
 	GUN_Switch_Init();
+	YAW_Switch_Init();
 	
 	CAN_Device_Init();
 	ControlVariableInit();

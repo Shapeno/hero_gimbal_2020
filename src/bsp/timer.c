@@ -147,7 +147,7 @@ void TIM6_DAC_IRQHandler(void)  {
 //    Control_Task();
 //		if(cnt++ > 67){
 //			cnt=0;
-//			if(PHOTO_SWITCH == PHOTO_SWITCH_ON)		msk |= 0x38;
+//			if(GUN_SWITCH == PHOTO_SWITCH_ON)		msk |= 0x38;
 //			else{
 //				if(Get_Flag(Ver_Fric_rotate)) {
 //					if(n++<5) msk |= 0x38;

@@ -49,7 +49,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\OBJ\</OutputDirectory>
-          <OutputName>Scu_Rm2018</OutputName>
+          <OutputName>Scu_Rm2020</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -608,9 +608,9 @@
               <FilePath>..\src\bsp\dbus.c</FilePath>
             </File>
             <File>
-              <FileName>gun.c</FileName>
+              <FileName>switch.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\bsp\gun.c</FilePath>
+              <FilePath>..\src\bsp\switch.c</FilePath>
             </File>
             <File>
               <FileName>laser.c</FileName>

@@ -28,7 +28,7 @@
 #include "timer.h"
 #include "bsp_imu.h"
 #include "spi.h"
-#include "gun.h"
+#include "switch.h"
 
 #include "usart2.h"
 #include "usart3.h"
