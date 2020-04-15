@@ -183,7 +183,7 @@ void SetMotorCurrent(uint8_t device_seq, int16_t current);
 void SendMotorCurrent(uint8_t device_seq);
 
 void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W);
-gun_data_t Get_Gun_Data();
-robot_status_t Get_Robot_Status();
+gun_data_t Get_Gun_Data(void);
+robot_status_t Get_Robot_Status(void);
 
 #endif 

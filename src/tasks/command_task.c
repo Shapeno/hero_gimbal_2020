@@ -171,6 +171,20 @@ void MouseKeyCmdPrc(Mouse_Data_t *mouse, Key_Data_t *key){
 		ChassisSpeed_Target.left_right_target	=	-key->A * NORMAL_LEFT_RIGHT_SPEED;
 		ChassisSpeed_Target.rotate_target		=	mouse->x * MOUSE_TO_ROTATE_INC_FACT;
 	}
+	///<启动大陀螺和底盘预自旋
+	if(GetLastRcData().key.F!=key->F)
+	{
+		Start_Pre_Rotate();
+		if(GetWorkState()!=CHASSIS_ROTATE_STATE)SetWorkState(CHASSIS_ROTATE_STATE);
+		else SetWorkState(FOLLOW_UP_STATE);		
+	}
+	///<启动自由视角模式
+	if(GetLastRcData().mouse.press_r!=mouse->press_r){
+		if(mouse->press_r==1){
+			if(GetWorkState()!=CHASSIS_ROTATE_STATE)SetWorkState(FREE_VIEW_STATE);
+		}
+		else SetWorkState(FOLLOW_UP_STATE);	
+	}
 	///<云台目标位置
 	VAL_LIMIT(mouse->x, -150, 150);
 	VAL_LIMIT(mouse->y, -150, 150);

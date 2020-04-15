@@ -578,10 +578,10 @@ void can_msg_encode( CanRxMsg * msg, Can_Channel_e CAN_x){
 void angle_convert(uint8_t seq){
 	motor_data[seq-1].angle=(motor_data[seq-1].ecd_angle-can_cfg_info[seq-1].ecd_bias)*360.00/Full_Ecd_Angle;
 	if(motor_data[seq-1].angle>180){
-		motor_data[seq-1].angle-=360.0;
+		motor_data[seq-1].angle-=360.0f;
 	}
 	else if(motor_data[seq-1].angle<-180){
-		motor_data[seq-1].angle+=360.0;
+		motor_data[seq-1].angle+=360.0f;
 	}
 	if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)>300)motor_data[seq-1].cycles--;
 	else if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)<-300)motor_data[seq-1].cycles++;

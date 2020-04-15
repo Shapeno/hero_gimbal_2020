@@ -347,6 +347,7 @@ static void GimbalMotorOutput(void);
 static void CMControlLoop(void);
 static void ShootLimitSwitch(void);
 ///½Ó¿Úº¯Êý
+void Start_Pre_Rotate(void);
 void StartBigFric(void);
 void StopBigFric(void);
 void SetWorkState(WorkState_e state);
