@@ -40,6 +40,27 @@
 #include "stdarg.h"		 
 #include "stdio.h"	
 
+
+#ifdef USE_USB_TO_REPORT		//要使用请在main.h进行修改
+#pragma import(__use_no_semihosting)
+struct __FILE {
+    int handle;
+};
+void _ttywrch(int ch) 
+{ 
+ch = ch; 
+} 
+FILE __stdout;
+void _sys_exit(int x) {
+    x = x;
+}
+
+int fputc(int ch, FILE *f) {
+	VCP_DataTx((u8)ch);
+    return ch;
+}
+#endif
+
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
 LINE_CODING linecoding =
@@ -64,18 +85,20 @@ extern uint32_t APP_Rx_ptr_in;    /* Increment this pointer or roll it back to
                                      start address when writing received data
                                      in the buffer APP_Rx_Buffer. */
 
-	//用类似串口1接收数据的方法,来处理USB虚拟串口接收到的数据.
+//用类似串口1接收数据的方法,来处理USB虚拟串口接收到的数据.
 u8 USB_USART_RX_BUF[USB_USART_REC_LEN]; 	//接收缓冲,最大USART_REC_LEN个字节.
-//接收状态
-//bit15，	接收完成标志
-//bit14，	接收到0x0d
-//bit13~0，	接收到的有效字节数目
-u16 USB_USART_RX_STA=0;       				//接收状态标记
+uint32_t USB_USART_RX_LEN=0;
+u16 USB_USART_RX_STA;   					//接收状态标记	
+void usbrecieveData(u8* buf,uint32_t* len){
+	buf=USB_USART_RX_BUF;
+	*len=USB_USART_RX_LEN;
+}
 
 /* Private function prototypes -----------------------------------------------*/
 static uint16_t VCP_Init     (void);
 static uint16_t VCP_DeInit   (void);
 static uint16_t VCP_Ctrl     (uint32_t Cmd, uint8_t* Buf, uint32_t Len);
+static uint16_t VCP_DataRx   (uint8_t* Buf, uint32_t Len);
 
 CDC_IF_Prop_TypeDef VCP_fops = 
 {
@@ -206,31 +229,15 @@ uint16_t VCP_DataTx (uint8_t data)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the opeartion: USBD_OK if all operations are OK else VCP_FAIL
   */
-uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len)
+static uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len)
 {
-	u8 i;
-	u8 res;
-	for(i=0;i<Len;i++)
-	{  
-		res=Buf[i]; 
-		if((USB_USART_RX_STA&0x8000)==0)		//接收未完成
-		{
-			if(USB_USART_RX_STA&0x4000)			//接收到了0x0d
-			{
-				if(res!=0x0a)USB_USART_RX_STA=0;//接收错误,重新开始
-				else USB_USART_RX_STA|=0x8000;	//接收完成了 
-			}else //还没收到0X0D
-			{	
-				if(res==0x0d)USB_USART_RX_STA|=0x4000;
-				else
-				{
-					USB_USART_RX_BUF[USB_USART_RX_STA&0X3FFF]=res;
-					USB_USART_RX_STA++;
-					if(USB_USART_RX_STA>(USB_USART_REC_LEN-1))USB_USART_RX_STA=0;//接收数据错误,重新开始接收	
-				}					
-			}
-		}   
-	}
+	memset(USB_USART_RX_BUF,0,USB_USART_REC_LEN);
+	memcpy(USB_USART_RX_BUF,Buf,Len);
+	
+	USB_USART_RX_LEN=Len;
+	USB_USART_RX_STA|=0x8000;
+	USB_USART_RX_STA|=0x4000;
+	USB_USART_RX_STA|=((USB_USART_RX_LEN-2)&0X3FFF);
   return USBD_OK;
 }
 
@@ -262,7 +269,7 @@ void usb_printf(char* fmt,...)
 	}
 } 
 
-void usbIapResponse(uint8_t* buf, uint32_t len)
+void usbsendData(uint8_t* buf, uint32_t len)
 {
 	for(uint32_t i=0; i<len; i++)//循环发送数据
 	{

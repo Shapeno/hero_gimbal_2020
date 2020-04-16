@@ -67,7 +67,7 @@ extern  USBD_Usr_cb_TypeDef USR_HS_cb;
 //表示USB连接状态
 //0,没有连接;
 //1,已经连接;
-extern vu8 bDeviceState;		//默认没有连接  
+
 
 /**
   * @}
@@ -93,16 +93,10 @@ extern vu8 bDeviceState;		//默认没有连接
 /** @defgroup USBD_USR_Exported_Variables
   * @{
   */ 
-u8 getusbConnectState(void);
+u8 Get_USBConnectState(void);	//获取USB连接状态
 	
 void     USBD_USR_Init(void);
-static void     USBD_USR_DeviceReset (uint8_t speed);
-static void     USBD_USR_DeviceConfigured (void);
-static void     USBD_USR_DeviceSuspended(void);
-static void     USBD_USR_DeviceResumed(void);
 
-static void     USBD_USR_DeviceConnected(void);
-static void     USBD_USR_DeviceDisconnected(void); 
 
 //void     USBD_USR_FS_Init(void);
 //void     USBD_USR_FS_DeviceReset (uint8_t speed);

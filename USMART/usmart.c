@@ -2,6 +2,7 @@
 #include "usart3.h"
 #include "uart7.h"
 #include "uart8.h"
+#include "usbd_cdc_vcp.h"
 #include "sys.h" 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -223,15 +224,21 @@ u32 usmart_get_runtime(void)
     usmart_dev.runtime+=TIM_GetCounter(TIM4);
     return usmart_dev.runtime;        //返回计数值
 }  
+//usmart主进程
+void usmart_Prc(void)
+{
+	usmart_dev.scan();    //执行usmart扫描    
+	TIM_SetCounter(TIM4,0);        //清空定时器的CNT
+	TIM_SetAutoreload(TIM4,100);//恢复原来的设置     
+}
 //下面这两个函数,非USMART函数,放到这里,仅仅方便移植. 
-//定时器4中断服务程序     
+//定时器4中断服务程序    
+#if !SYSTEM_SUPPORT_OS
 void TIM4_IRQHandler(void)
 {                                       
     if(TIM_GetITStatus(TIM4,TIM_IT_Update)==SET)//溢出中断
     {
-        usmart_dev.scan();    //执行usmart扫描    
-        TIM_SetCounter(TIM4,0);        //清空定时器的CNT
-        TIM_SetAutoreload(TIM4,100);//恢复原来的设置                                                                
+        usmart_Prc();                                                             
     }                   
     TIM_ClearITPendingBit(TIM4,TIM_IT_Update);  //清除中断标志位    
 }
@@ -261,13 +268,16 @@ void Timer4_Init(u16 arr,u16 psc)
                                   
 }
 #endif
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////
 //初始化串口控制器
 //sysclk:系统时钟（Mhz）
 void usmart_init(u8 sysclk)
 {
 #if USMART_ENTIMX_SCAN==1
-    Timer4_Init(1000,(u32)sysclk*100-1);//分频,时钟为10K ,100ms中断一次,注意,计数频率必须为10Khz,以和runtime单位(0.1ms)同步.
+	#if !SYSTEM_SUPPORT_OS
+		Timer4_Init(1000,(u32)sysclk*100-1);//分频,时钟为10K ,100ms中断一次,注意,计数频率必须为10Khz,以和runtime单位(0.1ms)同步.
+	#endif
 #endif
     usmart_dev.sptype=1;    //十六进制显示参数
 }        

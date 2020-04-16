@@ -1,6 +1,7 @@
 #include "usbd_usr.h"
 #include "usb_dcd_int.h"
 #include <stdio.h> 
+#include "usbd_cdc_vcp.h"
 #include "sys.h" 
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -17,14 +18,21 @@
 //修改信息
 //无
 ////////////////////////////////////////////////////////////////////////////////// 	
+static void     USBD_USR_DeviceReset (uint8_t speed);
+static void     USBD_USR_DeviceConfigured (void);
+static void     USBD_USR_DeviceSuspended(void);
+static void     USBD_USR_DeviceResumed(void);
 
+static void     USBD_USR_DeviceConnected(void);
+static void     USBD_USR_DeviceDisconnected(void); 
 //表示USB连接状态
 //0,没有连接;
 //1,已经连接;
-vu8 bDeviceState=0;		//默认没有连接  
-u8 getusbConnectState(void)
+static vu8 bDeviceState=0;		//默认没有连接  
+u8 Get_USBConnectState(void)
 {
 	return bDeviceState;
+	
 }
 
 extern USB_OTG_CORE_HANDLE  USB_OTG_dev;

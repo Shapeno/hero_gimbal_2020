@@ -36,9 +36,17 @@
 #include "usbd_cdc_core.h"
 #include "usbd_conf.h"
 
-//#define USB_RX_LEN	 	(2 * 1024)	//USB接收数据缓存区
+#include "main.h"	
+/* 用于适应串口调参-----------------------------------------------------------*/
+#ifdef USE_USB_TO_REPORT
+#define USART_RX_BUF USB_USART_RX_BUF
+#define USART_RX_STA USB_USART_RX_STA
+#endif
+
+/* 接收和传输缓冲区-----------------------------------------------------------*/
 #define USB_USART_REC_LEN	 	200		//USB串口接收缓冲区最大字节数
 extern u8  USB_USART_RX_BUF[USB_USART_REC_LEN]; //接收缓冲,最大USB_USART_REC_LEN个字节.末字节为换行符 
+extern uint32_t USB_USART_RX_LEN;				//接受到的数据长度
 extern u16 USB_USART_RX_STA;   					//接收状态标记	
 /* Exported typef ------------------------------------------------------------*/
 /* The following structures groups all needed parameters to be configured for the 
@@ -53,10 +61,9 @@ typedef struct
 }LINE_CODING;
 
 void usbd_cdc_vcp_Init(void);
-void usbsendData(u8* data, u16 length);
-bool usbvcpGetDataWithTimout(uint8_t *c);
-uint16_t VCP_DataTx   (uint8_t data);
-uint16_t VCP_DataRx   (uint8_t* Buf, uint32_t Len);
+void usbsendData(uint8_t* buf, uint32_t len);
+void usbrecieveData(uint8_t* buf,uint32_t* len);
+uint16_t VCP_DataTx(uint8_t data);
 void usb_printf(char* fmt,...); 
 
 #endif /* __USBD_CDC_VCP_H */

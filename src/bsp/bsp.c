@@ -11,6 +11,7 @@
 #include "adc.h"
 #include "main.h"
 #include "usbd_cdc_vcp.h"
+//#include "usbd_usr.h"
 //------------------------------------------------------------
 //°å¼¶Ö§³Ö
 //------------------------------------------------------------
@@ -51,7 +52,6 @@ void BSP_Init(void)
 	oled_init();
 	OLED_Button_ADC_init();
 	menu_init();
-	usbd_cdc_vcp_Init();
 }
 void BSP_Pre_Init(void){
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
@@ -65,4 +65,5 @@ void BSP_Pre_Init(void){
 	#ifdef USE_UART8_TO_REPORT
 	UART8_Init(115200);
 	#endif
+	usbd_cdc_vcp_Init();
 }

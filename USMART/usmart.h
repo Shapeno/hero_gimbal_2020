@@ -125,4 +125,6 @@ void write_addr(u32 addr,u32 val);//在指定地址写入指定的值
 u32 usmart_get_runtime(void);    //获取运行时间
 void usmart_reset_runtime(void);//复位运行时间
 
+void usmart_Prc(void);//主进程
+
 #endif
