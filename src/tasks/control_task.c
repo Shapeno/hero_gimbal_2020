@@ -355,22 +355,22 @@ void BigBulletFric_Control_Prc(void){
 	*/
 void Monitor_Pitch_PID(void)
 {
-    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     GMPPositionPID.kp,GMPPositionPID.ki,GMPPositionPID.kd);
 }
 void Monitor_Yaw_PID(void)
 {
-    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     GMYPositionPID.kp,GMYPositionPID.ki,GMYPositionPID.kd);
 }
 void FRIC_PID()
 {
 #if(Debug_VFric==0)
-	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     HFric1_SpeedPID.kp,HFric1_SpeedPID.ki,HFric1_SpeedPID.kd);
 #endif
 #if(Debug_VFric==1)
-	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     VFric_SpeedPID.kp,VFric_SpeedPID.ki,VFric_SpeedPID.kd);
 #endif
 }

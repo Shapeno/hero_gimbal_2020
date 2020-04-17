@@ -324,7 +324,7 @@ void usmart_exe(void)
     id=usmart_dev.id;
     if(id>=usmart_dev.fnum)return;//不执行.
     usmart_get_fname((u8*)usmart_dev.funs[id].name,sfname,&pnum,&rval);//得到本地函数名,及参数个数 
-    printf("\r\n%s(",sfname);//输出正要执行的函数名
+    printf("%s(",sfname);//输出正要执行的函数名
     for(i=0;i<pnum;i++)//输出参数
     {
         if(usmart_dev.parmtype&(1<<i))//参数是字符串
