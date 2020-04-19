@@ -759,7 +759,7 @@ uint8_t  usbd_cdc_EP0_RxReady (void  *pdev)
     APP_FOPS[0].pIf_Ctrl(cdcCmd, CmdBuff, cdcLen,0);
     /* Process the data */
     APP_FOPS[1].pIf_Ctrl(cdcCmd, CmdBuff, cdcLen,1); 
-    
+
     /* Reset the command variable to default value */
     cdcCmd = NO_CMD;
   }
@@ -779,7 +779,7 @@ uint8_t  usbd_cdc_DataIn (void *pdev, uint8_t epnum)
 {
   uint16_t USB_Tx_ptr;
   uint16_t USB_Tx_length;
-  if(epnum==0){
+  if((epnum & 0x7F)==0x01){
   if (USB_Tx_State == USB_CDC_BUSY)
   {
 		if (APP_Rx_length1 == 0) 
@@ -830,7 +830,7 @@ uint8_t  usbd_cdc_DataIn (void *pdev, uint8_t epnum)
 	  }
   }
 #ifdef DUAL_COM
-  else  if(epnum==1){
+  else  if((epnum & 0x7F)==0x03){
   if (USB_Tx_State == USB_CDC_BUSY)
   {
 		if (APP_Rx_length2 == 0) 

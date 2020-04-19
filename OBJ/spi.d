@@ -1,0 +1,57 @@
+..\obj\spi.o: ..\src\bsp\spi.c
+..\obj\spi.o: ..\include\bsp\spi.h
+..\obj\spi.o: ..\include\system\sys.h
+..\obj\spi.o: ..\USER\stm32f4xx.h
+..\obj\spi.o: ..\CORE\core_cm4.h
+..\obj\spi.o: E:\Program Files\MDK\Keil_5\ARM\ARMCC\Bin\..\include\stdint.h
+..\obj\spi.o: ..\CORE\core_cmInstr.h
+..\obj\spi.o: ..\CORE\core_cmFunc.h
+..\obj\spi.o: ..\CORE\core_cm4_simd.h
+..\obj\spi.o: ..\USER\system_stm32f4xx.h
+..\obj\spi.o: ..\USER\stm32f4xx_conf.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_adc.h
+..\obj\spi.o: ..\USER\stm32f4xx.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_crc.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_dbgmcu.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_dma.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_exti.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_flash.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_gpio.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_i2c.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_iwdg.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_pwr.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_rcc.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_rtc.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_sdio.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_spi.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_syscfg.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_tim.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_usart.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_wwdg.h
+..\obj\spi.o: ..\FWLIB\inc\misc.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_cryp.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_hash.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_rng.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_can.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_dac.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_dma2d.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_fmc.h
+..\obj\spi.o: ..\FWLIB\inc\stm32f4xx_sai.h
+..\obj\spi.o: ..\freeRTOS\include\FreeRTOSConfig.h
+..\obj\spi.o: ..\freeRTOS\include\FreeRTOS.h
+..\obj\spi.o: E:\Program Files\MDK\Keil_5\ARM\ARMCC\Bin\..\include\stddef.h
+..\obj\spi.o: ..\freeRTOS\include\projdefs.h
+..\obj\spi.o: ..\freeRTOS\include\portable.h
+..\obj\spi.o: ..\freeRTOS\include\deprecated_definitions.h
+..\obj\spi.o: ..\freeRTOS\portable\RVDS\ARM_CM4F\portmacro.h
+..\obj\spi.o: ..\freeRTOS\include\mpu_wrappers.h
+..\obj\spi.o: ..\freeRTOS\include\task.h
+..\obj\spi.o: ..\freeRTOS\include\list.h
+..\obj\spi.o: ..\include\system\delay.h
+..\obj\spi.o: ..\include\bsp\usart3.h
+..\obj\spi.o: E:\Program Files\MDK\Keil_5\ARM\ARMCC\Bin\..\include\stdio.h
+..\obj\spi.o: ..\include\system\sys.h
+..\obj\spi.o: ..\USER\main.h
+..\obj\spi.o: E:\Program Files\MDK\Keil_5\ARM\ARMCC\Bin\..\include\stdbool.h
+..\obj\spi.o: ..\include\bsp\imu.h
