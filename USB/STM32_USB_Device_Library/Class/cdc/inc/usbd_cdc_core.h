@@ -45,8 +45,13 @@
 /** @defgroup usbd_cdc_Exported_Defines
   * @{
   */ 
+#ifdef DUAL_COM
+#define USB_CDC_CONFIG_DESC_SIZ                (141)
+#define USB_CDC_DESC_SIZ                       (141-9)
+#else
 #define USB_CDC_CONFIG_DESC_SIZ                (67)
 #define USB_CDC_DESC_SIZ                       (67-9)
+#endif
 
 #define DEVICE_CLASS_CDC                        0x02
 #define DEVICE_SUBCLASS_CDC                     0x00
@@ -92,11 +97,11 @@
   */
 typedef struct _CDC_IF_PROP
 {
-  uint16_t (*pIf_Init)     (void);   
-  uint16_t (*pIf_DeInit)   (void);   
-  uint16_t (*pIf_Ctrl)     (uint32_t Cmd, uint8_t* Buf, uint32_t Len);
-  uint16_t (*pIf_DataTx)   (uint8_t data);
-  uint16_t (*pIf_DataRx)   (uint8_t* Buf, uint32_t Len);
+  uint16_t (*pIf_Init)     (uint8_t Index);   
+  uint16_t (*pIf_DeInit)   (uint8_t Index);   
+  uint16_t (*pIf_Ctrl)     (uint32_t Cmd, uint8_t* Buf, uint32_t Len,uint8_t Index);
+  uint16_t (*pIf_DataTx)   (uint8_t data,uint8_t Index);
+  uint16_t (*pIf_DataRx)   (uint8_t* Buf, uint32_t Len,uint8_t Index);
 }
 CDC_IF_Prop_TypeDef;
 /**

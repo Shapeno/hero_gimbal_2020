@@ -45,9 +45,13 @@
 /** @defgroup USB_VCP_Class_Layer_Parameter
   * @{
   */ 
-#define CDC_IN_EP                       0x81  /* EP1 for data IN */
-#define CDC_OUT_EP                      0x01  /* EP1 for data OUT */
-#define CDC_CMD_EP                      0x82  /* EP2 for CDC commands */
+#define CDC_IN_EP1                       0x81  /* EP1 for data IN */
+#define CDC_OUT_EP1                      0x01  /* EP1 for data OUT */
+#define CDC_CMD_EP2                      0x82  /* EP2 for CDC commands */
+
+#define CDC_IN_EP3                       0x83  /* EP1 for data IN */
+#define CDC_OUT_EP3                      0x03  /* EP1 for data OUT */
+#define CDC_CMD_EP4                      0x84  /* EP2 for CDC commands */
 
 /* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
 #ifdef USE_USB_OTG_HS

@@ -107,9 +107,16 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_SIZ_DEVICE_DESC] __ALIGN_END =
   USB_DEVICE_DESCRIPTOR_TYPE, /*bDescriptorType*/
   0x00,                       /*bcdUSB */
   0x02,
+	
+#ifdef DUAL_COM
+  0xEF,                       /*bDeviceClass*/
+  0x02,                       /*bDeviceSubClass*/
+  0x01,                       /*bDeviceProtocol*/
+#else
   0x00,                       /*bDeviceClass*/
   0x00,                       /*bDeviceSubClass*/
   0x00,                       /*bDeviceProtocol*/
+#endif
   USB_OTG_MAX_EP0_SIZE,      /*bMaxPacketSize*/
   LOBYTE(USBD_VID),           /*idVendor*/
   HIBYTE(USBD_VID),           /*idVendor*/

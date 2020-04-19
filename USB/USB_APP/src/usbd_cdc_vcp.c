@@ -56,14 +56,14 @@ void _sys_exit(int x) {
 }
 
 int fputc(int ch, FILE *f) {
-	VCP_DataTx((u8)ch);
+	VCP_DataTx((u8)ch,0);
     return ch;
 }
 #endif
 
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
-LINE_CODING linecoding =
+LINE_CODING linecoding[2] =
   {
     500000, /* baud rate*/
     0x00,   /* stop bits-1*/
@@ -81,26 +81,35 @@ LINE_CODING linecoding =
 extern uint8_t  APP_Rx_Buffer []; /* Write CDC received data in this buffer.
                                      These data will be sent over USB IN endpoint
                                      in the CDC core functions. */
-extern uint32_t APP_Rx_ptr_in;    /* Increment this pointer or roll it back to
+extern uint32_t APP_Rx_ptr_in1;    /* Increment this pointer or roll it back to
                                      start address when writing received data
                                      in the buffer APP_Rx_Buffer. */
-
+#ifdef DUAL_COM
+extern uint8_t  APP_Rx2_Buffer []; /* Write CDC received data in this buffer.
+                                     These data will be sent over USB IN endpoint
+                                     in the CDC core functions. */
+extern uint32_t APP_Rx_ptr_in2;    /* Increment this pointer or roll it back to
+                                     start address when writing received data
+                                     in the buffer APP_Rx_Buffer. */
+#endif
 //用类似串口1接收数据的方法,来处理USB虚拟串口接收到的数据.
-u8 USB_USART_RX_BUF[USB_USART_REC_LEN]; 	//接收缓冲,最大USART_REC_LEN个字节.
-uint32_t USB_USART_RX_LEN=0;
-u16 USB_USART_RX_STA;   					//接收状态标记	
-void usbrecieveData(u8* buf,uint32_t* len){
-	buf=USB_USART_RX_BUF;
-	*len=USB_USART_RX_LEN;
+u8 USB_USART_RX_BUF[2][USB_USART_REC_LEN]; 	//接收缓冲,最大USART_REC_LEN个字节.
+uint32_t USB_USART_RX_LEN[2]={0};
+u16 USB_USART_RX_STA[2];   					//接收状态标记	
+void usbrecieveData(u8* buf,uint32_t* len,uint8_t Index){
+	buf=USB_USART_RX_BUF[Index];
+	*len=USB_USART_RX_LEN[Index];
 }
 
-/* Private function prototypes -----------------------------------------------*/
-static uint16_t VCP_Init     (void);
-static uint16_t VCP_DeInit   (void);
-static uint16_t VCP_Ctrl     (uint32_t Cmd, uint8_t* Buf, uint32_t Len);
-static uint16_t VCP_DataRx   (uint8_t* Buf, uint32_t Len);
 
-CDC_IF_Prop_TypeDef VCP_fops = 
+/* Private function prototypes -----------------------------------------------*/
+static uint16_t VCP_Init     (uint8_t Index);
+static uint16_t VCP_DeInit   (uint8_t Index);
+static uint16_t VCP_Ctrl     (uint32_t Cmd, uint8_t* Buf, uint32_t Len,uint8_t Index);
+uint16_t VCP_DataTx   (uint8_t data,uint8_t Index);
+static uint16_t VCP_DataRx   (uint8_t* buf, uint32_t Len,uint8_t Index);
+
+CDC_IF_Prop_TypeDef VCP_fops[2] = 
 {
   VCP_Init,
   VCP_DeInit,
@@ -109,12 +118,12 @@ CDC_IF_Prop_TypeDef VCP_fops =
   VCP_DataRx
 };
 
-static uint16_t VCP_Init(void)
+static uint16_t VCP_Init(uint8_t Index)
 {
   return USBD_OK;
 }
 
-static uint16_t VCP_DeInit(void)
+static uint16_t VCP_DeInit(uint8_t Index)
 {
   return USBD_OK;
 }
@@ -128,7 +137,7 @@ static uint16_t VCP_DeInit(void)
   * @param  Len: Number of data to be sent (in bytes)
   * @retval Result of the opeartion (USBD_OK in all cases)
   */
-static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
+static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len,uint8_t Index)
 { 
   switch (Cmd)
   {
@@ -153,20 +162,20 @@ static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
     break;
 
   case SET_LINE_CODING:
-    linecoding.bitrate = (uint32_t)(Buf[0] | (Buf[1] << 8) | (Buf[2] << 16) | (Buf[3] << 24));
-    linecoding.format = Buf[4];
-    linecoding.paritytype = Buf[5];
-    linecoding.datatype = Buf[6];
+    linecoding[Index].bitrate = (uint32_t)(Buf[0] | (Buf[1] << 8) | (Buf[2] << 16) | (Buf[3] << 24));
+    linecoding[Index].format = Buf[4];
+    linecoding[Index].paritytype = Buf[5];
+    linecoding[Index].datatype = Buf[6];
     break;
 
   case GET_LINE_CODING:
-    Buf[0] = (uint8_t)(linecoding.bitrate);
-    Buf[1] = (uint8_t)(linecoding.bitrate >> 8);
-    Buf[2] = (uint8_t)(linecoding.bitrate >> 16);
-    Buf[3] = (uint8_t)(linecoding.bitrate >> 24);
-    Buf[4] = linecoding.format;
-    Buf[5] = linecoding.paritytype;
-    Buf[6] = linecoding.datatype; 
+    Buf[0] = (uint8_t)(linecoding[Index].bitrate);
+    Buf[1] = (uint8_t)(linecoding[Index].bitrate >> 8);
+    Buf[2] = (uint8_t)(linecoding[Index].bitrate >> 16);
+    Buf[3] = (uint8_t)(linecoding[Index].bitrate >> 24);
+    Buf[4] = linecoding[Index].format;
+    Buf[5] = linecoding[Index].paritytype;
+    Buf[6] = linecoding[Index].datatype; 
     break;
 
   case SET_CONTROL_LINE_STATE:
@@ -192,25 +201,46 @@ static uint16_t VCP_Ctrl (uint32_t Cmd, uint8_t* Buf, uint32_t Len)
   * @param  Len: Number of data to be sent (in bytes)
   * @retval Result of the opeartion: USBD_OK if all operations are OK else VCP_FAIL
   */
-uint16_t VCP_DataTx (uint8_t data)
+uint16_t VCP_DataTx (uint8_t data,uint8_t Index)
 {
-  if (linecoding.datatype == 7)
-  {
-    APP_Rx_Buffer[APP_Rx_ptr_in] = data & 0x7F;
-  }
-  else if (linecoding.datatype == 8)
-  {
-    APP_Rx_Buffer[APP_Rx_ptr_in] = data;
-  }
-	
-  APP_Rx_ptr_in++;
-  
-  /* To avoid buffer overflow */
-  if(APP_Rx_ptr_in == APP_RX_DATA_SIZE)
-  {
-    APP_Rx_ptr_in = 0;
-  }  
-  
+	if(Index==0){
+	  if (linecoding[0].datatype == 7)
+	  {
+		APP_Rx_Buffer[APP_Rx_ptr_in1] = data & 0x7F;
+	  }
+	  else if (linecoding[0].datatype == 8)
+	  {
+		APP_Rx_Buffer[APP_Rx_ptr_in1] = data;
+	  }
+		
+	  APP_Rx_ptr_in1++;
+	  
+	  /* To avoid buffer overflow */
+	  if(APP_Rx_ptr_in1 == APP_RX_DATA_SIZE)
+	  {
+		APP_Rx_ptr_in1 = 0;
+	  }  
+	}
+#ifdef DUAL_COM
+	if(Index==1){
+	  if (linecoding[Index].datatype == 7)
+	  {
+		APP_Rx2_Buffer[APP_Rx_ptr_in2] = data & 0x7F;
+	  }
+	  else if (linecoding[Index].datatype == 8)
+	  {
+		APP_Rx2_Buffer[APP_Rx_ptr_in2] = data;
+	  }
+		
+	  APP_Rx_ptr_in2++;
+	  
+	  /* To avoid buffer overflow */
+	  if(APP_Rx_ptr_in2 == APP_RX_DATA_SIZE)
+	  {
+		APP_Rx_ptr_in2 = 0;
+	  }  
+	}
+#endif
   return USBD_OK;
 }
 
@@ -229,15 +259,15 @@ uint16_t VCP_DataTx (uint8_t data)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the opeartion: USBD_OK if all operations are OK else VCP_FAIL
   */
-static uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len)
+static uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len,uint8_t Index)
 {
-	memset(USB_USART_RX_BUF,0,USB_USART_REC_LEN);
-	memcpy(USB_USART_RX_BUF,Buf,Len);
+	memset(USB_USART_RX_BUF[Index],0,USB_USART_REC_LEN);
+	memcpy(USB_USART_RX_BUF[Index],Buf,Len);
 	
-	USB_USART_RX_LEN=Len;
-	USB_USART_RX_STA|=0x8000;
-	USB_USART_RX_STA|=0x4000;
-	USB_USART_RX_STA|=((USB_USART_RX_LEN-2)&0X3FFF);
+	USB_USART_RX_LEN[Index]=Len;
+	USB_USART_RX_STA[Index]|=0x8000;
+	USB_USART_RX_STA[Index]|=0x4000;
+	USB_USART_RX_STA[Index]|=((USB_USART_RX_LEN[Index]-2)&0X3FFF);
   return USBD_OK;
 }
 
@@ -255,7 +285,7 @@ u8  USART_PRINTF_Buffer[200];	//usb_printf发送缓冲区
 
 //usb虚拟串口,printf 函数
 //确保一次发送数据不超USB_USART_REC_LEN字节
-void usb_printf(char* fmt,...)  
+void usb_printf(uint8_t Index,char* fmt,...)  
 {  
 	u16 i,j;
 	va_list ap;
@@ -265,15 +295,15 @@ void usb_printf(char* fmt,...)
 	i=strlen((const char*)USART_PRINTF_Buffer);//此次发送数据的长度
 	for(j=0;j<i;j++)//循环发送数据
 	{
-		VCP_DataTx(USART_PRINTF_Buffer[j]); 
+		VCP_DataTx(USART_PRINTF_Buffer[j],Index); 
 	}
 } 
 
-void usbsendData(uint8_t* buf, uint32_t len)
+void usbsendData(uint8_t* buf, uint32_t len,uint8_t Index)
 {
 	for(uint32_t i=0; i<len; i++)//循环发送数据
 	{
-		VCP_DataTx(buf[i]); 
+		VCP_DataTx(buf[i],Index); 
 	}
 }
 
