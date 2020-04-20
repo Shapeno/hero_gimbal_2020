@@ -64,12 +64,17 @@ int fputc(int ch, FILE *f) {
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE    USB_OTG_dev __ALIGN_END ;
 
 LINE_CODING linecoding[2] =
-  {
+  {{
     500000, /* baud rate*/
     0x00,   /* stop bits-1*/
     0x00,   /* parity - none*/
     0x08    /* nb. of bits 8*/
-  };
+  },{
+	500000, /* baud rate*/
+    0x00,   /* stop bits-1*/
+    0x00,   /* parity - none*/
+    0x08    /* nb. of bits 8*/
+  }};
   
 //#define USB_RX_LEN	 	(2 * 1024)	//USB接收数据缓存区
 //uint8_t usb_rx_buf[USB_RX_LEN];
@@ -111,6 +116,12 @@ static uint16_t VCP_DataRx   (uint8_t* buf, uint32_t Len,uint8_t Index);
 
 CDC_IF_Prop_TypeDef VCP_fops[2] = 
 {
+  VCP_Init,
+  VCP_DeInit,
+  VCP_Ctrl,
+  VCP_DataTx,
+  VCP_DataRx,
+	
   VCP_Init,
   VCP_DeInit,
   VCP_Ctrl,
@@ -223,11 +234,11 @@ uint16_t VCP_DataTx (uint8_t data,uint8_t Index)
 	}
 #ifdef DUAL_COM
 	if(Index==1){
-	  if (linecoding[Index].datatype == 7)
+	  if (linecoding[1].datatype == 7)
 	  {
 		APP_Rx2_Buffer[APP_Rx_ptr_in2] = data & 0x7F;
 	  }
-	  else if (linecoding[Index].datatype == 8)
+	  else if (linecoding[1].datatype == 8)
 	  {
 		APP_Rx2_Buffer[APP_Rx_ptr_in2] = data;
 	  }
@@ -263,6 +274,8 @@ static uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len,uint8_t Index)
 {
 	memset(USB_USART_RX_BUF[Index],0,USB_USART_REC_LEN);
 	memcpy(USB_USART_RX_BUF[Index],Buf,Len);
+//	usb_printf(1,"VCP%d Get Message.\r\n%s",Index,USB_USART_RX_BUF);
+	VCP_DataTx('G',Index);
 	
 	USB_USART_RX_LEN[Index]=Len;
 	USB_USART_RX_STA[Index]|=0x8000;

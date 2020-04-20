@@ -247,7 +247,8 @@ void USB_Task(void*p_arg){
 		
 		USB_Prc();
 		
-		vTaskDelayUntil(&currentTime, USB_TASK_PERIOD/portTICK_RATE_MS);
+//		vTaskDelayUntil(&currentTime, USB_TASK_PERIOD/portTICK_RATE_MS);
+		delay_ms(1000);
 	}
 }
 /**	

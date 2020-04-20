@@ -336,7 +336,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER,USE_USB_OTG_FS</Define>
+              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,DUAL_COM</Define>
               <Undefine></Undefine>
               <IncludePath>..\CORE;..\FWLIB\STM32F4xx_StdPeriph_Driver\inc;..\USER;..\FWLIB\inc;..\include\bsp;..\include\system;..\freeRTOS\include;..\freeRTOS\portable\RVDS\ARM_CM4F;..\include\tasks;..\USMART;..\USB\STM32_USB_Device_Library\Class\cdc\inc;..\USB\STM32_USB_Device_Library\Core\inc;..\USB\STM32_USB_OTG_Driver\inc;..\USB\USB_APP\interface</IncludePath>
             </VariousControls>

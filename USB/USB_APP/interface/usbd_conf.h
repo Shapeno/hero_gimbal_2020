@@ -36,7 +36,8 @@
   * @{
   */ 
 #define USBD_CFG_MAX_NUM                1
-#define USBD_ITF_MAX_NUM                1
+#define USBD_ITF_MAX_NUM                3
+#define	VCP_TOTAL_IF_NUM		2
 
 #define USBD_SELF_POWERED               
 
@@ -48,11 +49,11 @@
 #define CDC_IN_EP1                       0x81  /* EP1 for data IN */
 #define CDC_OUT_EP1                      0x01  /* EP1 for data OUT */
 #define CDC_CMD_EP2                      0x82  /* EP2 for CDC commands */
-
+#ifdef DUAL_COM
 #define CDC_IN_EP3                       0x83  /* EP1 for data IN */
 #define CDC_OUT_EP3                      0x03  /* EP1 for data OUT */
 #define CDC_CMD_EP4                      0x84  /* EP2 for CDC commands */
-
+#endif
 /* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
 #ifdef USE_USB_OTG_HS
  #define CDC_DATA_MAX_PACKET_SIZE       512  /* Endpoint IN & OUT Packet size */

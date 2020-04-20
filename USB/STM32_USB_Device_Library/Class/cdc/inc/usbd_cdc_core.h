@@ -53,6 +53,8 @@
 #define USB_CDC_DESC_SIZ                       (67-9)
 #endif
 
+#define CDC_DESCRIPTOR_TYPE                     0x21
+
 #define DEVICE_CLASS_CDC                        0x02
 #define DEVICE_SUBCLASS_CDC                     0x00
 
