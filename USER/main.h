@@ -1,6 +1,8 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+/* use usb DUAL USB VCP(Virtual Com Port)*/
+#define DUAL_COM
 /* Choose from USART3 UART7 UART8 USB to print to upper computer*/
 #define USE_USB_TO_REPORT		//只能选其中一个，例如USE_USART3_TO_REPORT
 
