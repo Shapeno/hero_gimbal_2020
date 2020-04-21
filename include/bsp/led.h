@@ -12,8 +12,8 @@
 #define LED_E PGout(4)
 #define LED_D PGout(5)
 #define LED_C PGout(6)
-#define LED_B PGout(7)
-#define LED_A PGout(8)
+#define LED_B PGout(7)		//光电对管
+#define LED_A PGout(8)		//USB
 #define LED_Red   PEout(11)	//用于报错
 #define LED_Green PFout(14) //用于显示程序是否在运行
 

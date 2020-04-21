@@ -204,7 +204,8 @@ void Monitor_Task(void*p_arg){
 	
 		MonitorPrc();
 		
-		vTaskDelayUntil(&currentTime, MONITOR_TASK_PERIOD/portTICK_RATE_MS);
+//vTaskDelayUntil(&currentTime, MONITOR_TASK_PERIOD/portTICK_RATE_MS);
+		delay_ms(MONITOR_TASK_PERIOD/portTICK_RATE_MS);
 	}
 }
 
@@ -250,8 +251,6 @@ void Running_Task(void*p_arg){
 			LED_Red=LED_OFF;
 			LED_Green=~LED_Green;
 		}
-		if(IfRemoteOffline(xTaskGetTickCount()))Sys_Warning();
-		else Sys_Warning_Clean();
 		vTaskDelayUntil(&currentTime, RUNNING_TASK_PERIOD/portTICK_RATE_MS);
 	}
 }

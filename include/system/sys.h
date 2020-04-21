@@ -117,6 +117,5 @@ void Sys_Warning_Clean(void);
 bool GetSysError(void);
 void Sys_Error(void);
 void Sys_Error_Clean(void);
-bool IfRemoteOffline(portTickType currentTime);
 
 #endif

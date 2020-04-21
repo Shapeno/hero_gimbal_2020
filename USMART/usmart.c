@@ -2,6 +2,7 @@
 #include "usart3.h"
 #include "uart7.h"
 #include "uart8.h"
+#include "usbd_cdc_vcp.h"
 #include "sys.h" 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -127,7 +128,7 @@ u8 usmart_sys_cmd_exe(u8 *str)
             for(i=0;i<usmart_dev.fnum;i++)
             {
                 usmart_get_fname((u8*)usmart_dev.funs[i].name,sfname,&pnum,&rval);//得到本地函数名 
-                printf("%s id is:\r\n0X%08X\r\n",sfname,usmart_dev.funs[i].func); //显示ID
+                printf("%s id is:\t0X%08X\r\n",sfname,usmart_dev.funs[i].func); //显示ID
             }
             printf("\r\n");
             break;

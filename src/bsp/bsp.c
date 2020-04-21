@@ -55,6 +55,7 @@ void BSP_Init(void)
 void BSP_Pre_Init(void){
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	delay_init(168);
+	usbd_cdc_vcp_Init();
 	#ifdef USE_USART3_TO_REPORT
 	USART3_Init(115200);  //ÓÃÓÚµ÷ÊÔ
 	#endif

@@ -345,8 +345,8 @@ void BigBulletFric_Control_Prc(void){
 	static bool photo_switch_last;///<枪管光电开关上一次状态
 	
 	photo_switch=GUN_SWITCH;
-	if(photo_switch==1)LED_A=LED_OFF;
-	else LED_A=LED_ON;
+	if(photo_switch==1)LED_B=LED_OFF;
+	else LED_B=LED_ON;
 	///<小摩擦轮控制
 	if(single_shoot_mode==true){///<单发模式
 		if(on_shooting==false){
@@ -444,17 +444,17 @@ void BigBulletFric_Control_Prc(void){
 	*/
 void Monitor_Pitch_PID(void)
 {
-    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     GMPPositionPID.kp,GMPPositionPID.ki,GMPPositionPID.kd);
 }
 void Monitor_Yaw_PID(void)
 {
-    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+    printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     GMYPositionPID.kp,GMYPositionPID.ki,GMYPositionPID.kd);
 }
 void FRIC_PID()
 {
-	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f\r\n",
+	printf("PKP:%3.2f,PKI:%1.2f,PKD:%3.2f",
     VFric1_SpeedPID.kp,VFric1_SpeedPID.ki,VFric1_SpeedPID.kd);
 }
 void GMP_PID_PLUS(int x,int y)
