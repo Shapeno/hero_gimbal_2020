@@ -336,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER</Define>
+              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,DUAL_COM</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\FWLIB\STM32F4xx_StdPeriph_Driver\inc;..\USER;..\FWLIB\inc;..\include\bsp;..\include\system;..\freeRTOS\include;..\freeRTOS\portable\RVDS\ARM_CM4F;..\include\tasks;..\USMART</IncludePath>
+              <IncludePath>..\CORE;..\FWLIB\STM32F4xx_StdPeriph_Driver\inc;..\USER;..\FWLIB\inc;..\include\bsp;..\include\system;..\freeRTOS\include;..\freeRTOS\portable\RVDS\ARM_CM4F;..\include\tasks;..\USMART;..\USB\USB_APP\interface;..\USB\STM32_USB_OTG_Driver\inc;..\USB\STM32_USB_Device_Library\Class\cdc\inc;..\USB\STM32_USB_Device_Library\Core\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -741,6 +741,76 @@
               <FileName>usmart_str.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\USMART\usmart_str.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_OTG</GroupName>
+          <Files>
+            <File>
+              <FileName>usb_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_dcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd_int.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_dcd_int.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_DEVICE</GroupName>
+          <Files>
+            <File>
+              <FileName>usbd_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ioreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_ioreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_req.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_req.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Class\cdc\src\usbd_cdc_core.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_APP</GroupName>
+          <Files>
+            <File>
+              <FileName>usb_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usb_bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_vcp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_cdc_vcp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_desc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_desc.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_usr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_usr.c</FilePath>
             </File>
           </Files>
         </Group>

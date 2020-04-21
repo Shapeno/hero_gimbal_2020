@@ -2,22 +2,25 @@
 
 #include "dbus.h"
 #include "sys.h"
-#include "timer.h"
 #include <string.h>
 #include "control_task.h"
 #include "visualscope.h"
 #include "pid_regulator.h"
+#include "usbd_usr.h"
+#include "led.h"
 
 #include "can.h"
 //保存任务运行时间信息
 char RunTimeInfo[400];
-//FreeRTOS时间统计所用的节拍计数器
-volatile unsigned long long FreeRTOSRunTimeTicks;
-	void FreeRTOSRunTimeTicks_Add(void){FreeRTOSRunTimeTicks++;}///<中断处理函数调用
-extern PID_Regulator_t HFric1_SpeedPID;
-extern PID_Regulator_t HFric2_SpeedPID;
+//监控函数
+static bool IfRemoteOffline(void);
+static bool IfUSBConnected(void);
 
 void MonitorPrc(void){
+	//监测USB连接状态
+	IfUSBConnected();
+	//用于监控遥控器是否离线
+	IfRemoteOffline();
 //	printf("%d \r\n",(int)GetMotorData(PIT_MOTOR).angle+100);
 #if Monitor_Task_Time//打印到上位机
 	ShowRunTimeStats();
@@ -54,15 +57,33 @@ void ShowTaskList(void){
 	printf("%s\r\n",RunTimeInfo);
 }
 
-/// @brief 初始化TIM6使其为FreeRTOS的时间统计提供时基(系统调用)
-void ConfigureTimeForRunTimeStats(void)
-{
-    FreeRTOSRunTimeTicks=0;
-    TIM6_Init();   //初始化TIM6
+/** 
+	@brief 用于判断遥控器是否离线
+	当大于2ms没有消息则视为离线
+*/
+static bool IfRemoteOffline(void){
+	static portTickType currentTime;
+	currentTime=xTaskGetTickCount();
+	if(currentTime-GetRemoteDataTime()>300){
+		Sys_Warning();
+		return 1;
+	}
+	else{
+		Sys_Warning_Clean();
+		return 0;
+	}
 }
-
-/// @brief 获取定时器运行时间(系统调用)
-unsigned long long getFreeRTOSRunTimeTicks(void)
-{
-	return FreeRTOSRunTimeTicks;
+/** 
+	@brief 用于显示USB的连接状态，USB连接成功LED_A亮
+*/
+static bool IfUSBConnected(void){
+	static u8 usbstatus=0;
+	if(usbstatus!=Get_USBConnectState()){//USB连接状态发生了改变.
+		usbstatus=Get_USBConnectState();//记录新的状态
+		if(usbstatus==CONFIGURED){//提示USB连接成功		
+			LED_A=LED_ON;//DS1亮		
+		}else{//提示USB断开
+			LED_A=LED_OFF;//DS1灭
+		}
+	}
 }

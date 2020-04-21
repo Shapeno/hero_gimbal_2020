@@ -35,6 +35,7 @@
 #include "usart6.h"
 #include "uart7.h"
 #include "uart8.h"
+#include "usbd_cdc_vcp.h"
 
 #include "dbus.h"
 #include "laser.h"

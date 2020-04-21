@@ -70,13 +70,6 @@ void TIM6_Init(void){
 	TIM_ITConfig(TIM6, TIM_IT_Update,ENABLE);
 	TIM_ClearFlag(TIM6, TIM_FLAG_Update);
 }
-void TIM6_DAC_IRQHandler(void)  {
-	if (TIM_GetITStatus(TIM6,TIM_IT_Update)!= RESET){
-		FreeRTOSRunTimeTicks_Add();
-	}
-	TIM_ClearITPendingBit(TIM6,TIM_IT_Update);
-}
-
 
 //void TIM4_Init(void){
 //  TIM_TimeBaseInitTypeDef tim;
