@@ -68,7 +68,6 @@
 #include "usbd_desc.h"
 #include "usbd_req.h"
 
-
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
   */
@@ -392,7 +391,7 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[USB_CDC_CONFIG_DESC_SIZ]  __ALIGN_END =
   /*Endpoint 2 Descriptor*/
   0x07,                           /* bLength: Endpoint Descriptor size */
   USB_ENDPOINT_DESCRIPTOR_TYPE,   /* bDescriptorType: Endpoint */
-  CDC_CMD_EP2,                  /* bEndpointAddress */
+  CDC_CMD_EP4,                  /* bEndpointAddress */
   0x03,                           /* bmAttributes: Interrupt */
   LOBYTE(CDC_CMD_PACKET_SZE),     /* wMaxPacketSize: */
   HIBYTE(CDC_CMD_PACKET_SZE),
@@ -580,11 +579,11 @@ uint8_t  usbd_cdc_Init (void  *pdev,
               CDC_DATA_OUT_PACKET_SIZE,
               USB_OTG_EP_BULK);
   
-//   /* Open Command IN EP */
-//   DCD_EP_Open(pdev,
-//               CDC_CMD_EP4,
-//               CDC_CMD_PACKET_SZE,
-//               USB_OTG_EP_INT);	
+   /* Open Command IN EP */
+   DCD_EP_Open(pdev,
+               CDC_CMD_EP4,
+               CDC_CMD_PACKET_SZE,
+               USB_OTG_EP_INT);	
 #endif	
   pbuf = (uint8_t *)USBD_DeviceDesc;
   pbuf[4] = DEVICE_CLASS_CDC;
@@ -644,9 +643,9 @@ uint8_t  usbd_cdc_DeInit (void  *pdev,
   DCD_EP_Close(pdev,
               CDC_OUT_EP3);
 			  
-//  /* Open Command IN EP */
-//  DCD_EP_Close(pdev,
-//              CDC_CMD_EP4);
+  /* Open Command IN EP */
+  DCD_EP_Close(pdev,
+              CDC_CMD_EP4);
   
   /* Restore default state of the Interface physical components */
   APP_FOPS[1].pIf_DeInit(1);

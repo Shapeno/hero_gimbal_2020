@@ -2,13 +2,13 @@
   ******************************************************************************
   * @file    usb_hcd_int.c
   * @author  MCD Application Team
-  * @version V2.2.0
-  * @date    09-November-2015
+  * @version V2.1.0
+  * @date    19-March-2012
   * @brief   Host driver interrupt subroutines
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
   *
   * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
   * You may not use this file except in compliance with the License.
@@ -365,10 +365,9 @@ static uint32_t USB_OTG_USBH_handle_port_ISR (USB_OTG_CORE_HANDLE *pdev)
   USB_OTG_HPRT0_TypeDef  hprt0;
   USB_OTG_HPRT0_TypeDef  hprt0_dup;
   USB_OTG_HCFG_TypeDef   hcfg;    
+  uint32_t do_reset = 0;
   uint32_t retval = 0;
-  USB_OTG_GINTMSK_TypeDef  intmsk;
   
-  intmsk.d32 = 0;
   hcfg.d32 = 0;
   hprt0.d32 = 0;
   hprt0_dup.d32 = 0;
@@ -386,9 +385,10 @@ static uint32_t USB_OTG_USBH_handle_port_ISR (USB_OTG_CORE_HANDLE *pdev)
   /* Port Connect Detected */
   if (hprt0.b.prtconndet)
   {
+
     hprt0_dup.b.prtconndet = 1;
     USBH_HCD_INT_fops->DevConnected(pdev);
-    retval |= 1;   
+    retval |= 1;
   }
   
   /* Port Enable Changed */
@@ -398,9 +398,13 @@ static uint32_t USB_OTG_USBH_handle_port_ISR (USB_OTG_CORE_HANDLE *pdev)
     
     if (hprt0.b.prtena == 1)
     {
+      
+      USBH_HCD_INT_fops->DevConnected(pdev);
+      
       if ((hprt0.b.prtspd == HPRT0_PRTSPD_LOW_SPEED) ||
           (hprt0.b.prtspd == HPRT0_PRTSPD_FULL_SPEED))
-      { 
+      {
+        
         hcfg.d32 = USB_OTG_READ_REG32(&pdev->regs.HREGS->HCFG);
         
         if (hprt0.b.prtspd == HPRT0_PRTSPD_LOW_SPEED)
@@ -410,42 +414,38 @@ static uint32_t USB_OTG_USBH_handle_port_ISR (USB_OTG_CORE_HANDLE *pdev)
           {
             if(pdev->cfg.phy_itface  == USB_OTG_EMBEDDED_PHY)
             {
-              USB_OTG_InitFSLSPClkSel(pdev , HCFG_6_MHZ);
+              USB_OTG_InitFSLSPClkSel(pdev ,HCFG_6_MHZ );
             }
-            
-            else
-            {
-              USB_OTG_WRITE_REG32(&pdev->regs.HREGS->HFIR, 48000 );            
-              if (hcfg.b.fslspclksel != HCFG_48_MHZ)
-              {
-                USB_OTG_InitFSLSPClkSel(pdev ,HCFG_48_MHZ );
-              }
-            } 
+            do_reset = 1;
+          }
+        }
+        else
+        {
+          
+          USB_OTG_WRITE_REG32(&pdev->regs.HREGS->HFIR, 48000 );            
+          if (hcfg.b.fslspclksel != HCFG_48_MHZ)
+          {
+            USB_OTG_InitFSLSPClkSel(pdev ,HCFG_48_MHZ );
+            do_reset = 1;
           }
         }
       }
-      
-      USBH_HCD_INT_fops->DevPortEnabled(pdev);  
-      
-      /*unmask disconnect interrupt */
-      intmsk.d32 = 0;
-      intmsk.b.disconnect = 1;  
-      USB_OTG_MODIFY_REG32(&pdev->regs.GREGS->GINTMSK, intmsk.d32, intmsk.d32);
-    }
-    else
-    {
-      USBH_HCD_INT_fops->DevPortDisabled(pdev);
-      
+      else
+      {
+        do_reset = 1;
+      }
     }
   }
-  
   /* Overcurrent Change Interrupt */
   if (hprt0.b.prtovrcurrchng)
   {
     hprt0_dup.b.prtovrcurrchng = 1;
     retval |= 1;
   }
-  
+  if (do_reset)
+  {
+    USB_OTG_ResetPort(pdev);
+  }
   /* Clear Port Interrupts */
   USB_OTG_WRITE_REG32(pdev->regs.HPRT0, hprt0_dup.d32);
   
@@ -512,10 +512,7 @@ uint32_t USB_OTG_USBH_handle_hc_n_Out_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t 
   {
     pdev->host.ErrCnt[num] = 0;
     UNMASK_HOST_INT_CHH (num);
-    if (pdev->cfg.dma_enable == 0)
-    {
-      USB_OTG_HC_Halt(pdev, num);
-    }
+    USB_OTG_HC_Halt(pdev, num);
     CLEAR_HC_INT(hcreg , nak);
     pdev->host.HC_Status[num] = HC_NAK;      
   }
@@ -524,6 +521,7 @@ uint32_t USB_OTG_USBH_handle_hc_n_Out_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t 
   {
     UNMASK_HOST_INT_CHH (num);
     USB_OTG_HC_Halt(pdev, num);
+    pdev->host.ErrCnt[num] ++;
     pdev->host.HC_Status[num] = HC_XACTERR;
     CLEAR_HC_INT(hcreg , xacterr);
   }
@@ -531,15 +529,13 @@ uint32_t USB_OTG_USBH_handle_hc_n_Out_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t 
   {
     pdev->host.ErrCnt[num] = 0;
     UNMASK_HOST_INT_CHH (num);
-    if (pdev->cfg.dma_enable == 0)
-    {
-      USB_OTG_HC_Halt(pdev, num);
-    }
+    USB_OTG_HC_Halt(pdev, num);
     CLEAR_HC_INT(hcreg , nyet);
     pdev->host.HC_Status[num] = HC_NYET;    
   }
   else if (hcint.b.datatglerr)
   {
+    
     UNMASK_HOST_INT_CHH (num);
     USB_OTG_HC_Halt(pdev, num);
     CLEAR_HC_INT(hcreg , nak);   
@@ -578,8 +574,10 @@ uint32_t USB_OTG_USBH_handle_hc_n_Out_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t 
     }  
     else if(pdev->host.HC_Status[num] == HC_XACTERR)
     {
+      if (pdev->host.ErrCnt[num] == 3)
       {
         pdev->host.URB_State[num] = URB_ERROR;  
+        pdev->host.ErrCnt[num] = 0;
       }
     }
     CLEAR_HC_INT(hcreg , chhltd);    
@@ -606,12 +604,14 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
   USB_OTG_HCTSIZn_TypeDef  hctsiz;
   USB_OTG_HC_REGS *hcreg;
   
+  
   hcreg = pdev->regs.HC_REGS[num];
   hcint.d32 = USB_OTG_READ_REG32(&hcreg->HCINT);
   hcintmsk.d32 = USB_OTG_READ_REG32(&hcreg->HCINTMSK);
   hcint.d32 = hcint.d32 & hcintmsk.d32;
   hcchar.d32 = USB_OTG_READ_REG32(&pdev->regs.HC_REGS[num]->HCCHAR);
   hcintmsk.d32 = 0;
+  
   
   if (hcint.b.ahberr)
   {
@@ -636,6 +636,7 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
   }
   else if (hcint.b.datatglerr)
   {
+    
     UNMASK_HOST_INT_CHH (num);
     USB_OTG_HC_Halt(pdev, num);
     CLEAR_HC_INT(hcreg , nak);   
@@ -652,6 +653,7 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
   
   else if (hcint.b.xfercompl)
   {
+    
     if (pdev->cfg.dma_enable == 1)
     {
       hctsiz.d32 = USB_OTG_READ_REG32(&pdev->regs.HC_REGS[num]->HCTSIZ);
@@ -676,7 +678,8 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
       hcchar.b.oddfrm  = 1;
       USB_OTG_WRITE_REG32(&pdev->regs.HC_REGS[num]->HCCHAR, hcchar.d32); 
       pdev->host.URB_State[num] = URB_DONE;  
-    } 
+    }
+    
   }
   else if (hcint.b.chhltd)
   {
@@ -710,25 +713,20 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
   else if (hcint.b.xacterr)
   {
     UNMASK_HOST_INT_CHH (num);
+    pdev->host.ErrCnt[num] ++;
     pdev->host.HC_Status[num] = HC_XACTERR;
     USB_OTG_HC_Halt(pdev, num);
     CLEAR_HC_INT(hcreg , xacterr);    
+    
   }
   else if (hcint.b.nak)  
   {  
     if(hcchar.b.eptype == EP_TYPE_INTR)
     {
       UNMASK_HOST_INT_CHH (num);
-      if (pdev->cfg.dma_enable == 0)
-      {
-        USB_OTG_HC_Halt(pdev, num);
-      }
+      USB_OTG_HC_Halt(pdev, num);
     }
-    
-    pdev->host.HC_Status[num] = HC_NAK;
-    CLEAR_HC_INT(hcreg , nak);  
-    
-    if  ((hcchar.b.eptype == EP_TYPE_CTRL)||
+    else if  ((hcchar.b.eptype == EP_TYPE_CTRL)||
               (hcchar.b.eptype == EP_TYPE_BULK))
     {
       /* re-activate the channel  */
@@ -736,6 +734,8 @@ uint32_t USB_OTG_USBH_handle_hc_n_In_ISR (USB_OTG_CORE_HANDLE *pdev , uint32_t n
       hcchar.b.chdis = 0;
       USB_OTG_WRITE_REG32(&pdev->regs.HC_REGS[num]->HCCHAR, hcchar.d32); 
     }
+    pdev->host.HC_Status[num] = HC_NAK;
+    CLEAR_HC_INT(hcreg , nak);   
   }
   
   

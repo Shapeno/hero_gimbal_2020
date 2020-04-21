@@ -44,8 +44,8 @@
 #endif
 
 /* 接收和传输缓冲区-----------------------------------------------------------*/
-#define USB_USART_REC_LEN	 	200		//USB串口接收缓冲区最大字节数
-extern u8 USB_USART_RX_BUF[2][USB_USART_REC_LEN]; 	//接收缓冲,最大USART_REC_LEN个字节.
+#define USB_USART_REC_LEN	 	1024		//USB串口接收缓冲区最大字节数
+extern u8 USB_USART_RX_BUF[2][USB_USART_REC_LEN+1]; 	//接收缓冲,最大USART_REC_LEN个字节.
 extern uint32_t USB_USART_RX_LEN[2];
 extern u16 USB_USART_RX_STA[2];   					//接收状态标记	
 /* Exported typef ------------------------------------------------------------*/

@@ -98,7 +98,7 @@ extern uint32_t APP_Rx_ptr_in2;    /* Increment this pointer or roll it back to
                                      in the buffer APP_Rx_Buffer. */
 #endif
 //用类似串口1接收数据的方法,来处理USB虚拟串口接收到的数据.
-u8 USB_USART_RX_BUF[2][USB_USART_REC_LEN]; 	//接收缓冲,最大USART_REC_LEN个字节.
+u8 USB_USART_RX_BUF[2][USB_USART_REC_LEN+1]={0}; 	//接收缓冲,最大USART_REC_LEN个字节.
 uint32_t USB_USART_RX_LEN[2]={0};
 u16 USB_USART_RX_STA[2];   					//接收状态标记	
 void usbrecieveData(u8* buf,uint32_t* len,uint8_t Index){
@@ -272,16 +272,32 @@ uint16_t VCP_DataTx (uint8_t data,uint8_t Index)
   */
 static uint16_t VCP_DataRx (uint8_t* Buf, uint32_t Len,uint8_t Index)
 {
-	memset(USB_USART_RX_BUF[Index],0,USB_USART_REC_LEN);
-	memcpy(USB_USART_RX_BUF[Index],Buf,Len);
-//	usb_printf(1,"VCP%d Get Message.\r\n%s",Index,USB_USART_RX_BUF);
-	VCP_DataTx('G',Index);
-	
-	USB_USART_RX_LEN[Index]=Len;
-	USB_USART_RX_STA[Index]|=0x8000;
-	USB_USART_RX_STA[Index]|=0x4000;
-	USB_USART_RX_STA[Index]|=((USB_USART_RX_LEN[Index]-2)&0X3FFF);
-  return USBD_OK;
+	static uint16_t Rx_ptr[2]={0};
+	if(Rx_ptr[Index]==0){
+		memset(USB_USART_RX_BUF[Index],0,USB_USART_REC_LEN);
+		USB_USART_RX_LEN[Index]=0;
+	}
+	memcpy(USB_USART_RX_BUF[Index]+Rx_ptr[Index],Buf,Len);
+	Rx_ptr[Index]+=Len;
+	//已经传输完成
+	if(Rx_ptr[Index]==USB_USART_REC_LEN||(Buf[Len-2]==0x0d)){
+		USB_USART_RX_LEN[Index]+=Len;
+		USB_USART_RX_STA[Index]|=0x8000;
+		USB_USART_RX_STA[Index]|=0x4000;
+		USB_USART_RX_STA[Index]|=((USB_USART_RX_LEN[Index]-2)&0X3FFF);
+		Rx_ptr[Index]=0;
+		USB_USART_RX_BUF[Index][USB_USART_REC_LEN]=0;
+		usb_printf(Index,"\r\nVCP%d Get Msg(%d):%s",Index,USB_USART_RX_LEN[Index],USB_USART_RX_BUF[Index]);
+		return USBD_OK;
+	}
+	//未传输完成
+	else{
+		USB_USART_RX_LEN[Index]+=Len;
+		USB_USART_RX_STA[Index]|=0x0000;
+		USB_USART_RX_STA[Index]|=0x0000;
+		USB_USART_RX_STA[Index]|=((USB_USART_RX_LEN[Index]-2)&0X3FFF);
+		  return USBD_BUSY;
+	}
 }
 
 void usbd_cdc_vcp_Init(void)
@@ -294,7 +310,7 @@ void usbd_cdc_vcp_Init(void)
 		&USR_cb);
 }
 
-u8  USART_PRINTF_Buffer[200];	//usb_printf发送缓冲区
+u8  USART_PRINTF_Buffer[1024];	//usb_printf发送缓冲区
 
 //usb虚拟串口,printf 函数
 //确保一次发送数据不超USB_USART_REC_LEN字节
@@ -306,6 +322,7 @@ void usb_printf(uint8_t Index,char* fmt,...)
 	vsprintf((char*)USART_PRINTF_Buffer,fmt,ap);
 	va_end(ap);
 	i=strlen((const char*)USART_PRINTF_Buffer);//此次发送数据的长度
+	i=(i>APP_RX_DATA_SIZE)?APP_RX_DATA_SIZE:i;
 	for(j=0;j<i;j++)//循环发送数据
 	{
 		VCP_DataTx(USART_PRINTF_Buffer[j],Index); 

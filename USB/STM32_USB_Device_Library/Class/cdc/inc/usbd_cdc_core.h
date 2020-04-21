@@ -31,7 +31,8 @@
 #define __USB_CDC_CORE_H_
 
 #include  "usbd_ioreq.h"
-
+/* Includes USER--------------------------------------------------------------*/
+#include "main.h"
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
   */
