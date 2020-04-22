@@ -14,7 +14,7 @@
 char RunTimeInfo[400];
 //监控函数
 static bool IfRemoteOffline(void);
-static bool IfUSBConnected(void);
+static void IfUSBConnected(void);
 
 void MonitorPrc(void){
 	//监测USB连接状态
@@ -76,14 +76,14 @@ static bool IfRemoteOffline(void){
 /** 
 	@brief 用于显示USB的连接状态，USB连接成功LED_A亮
 */
-static bool IfUSBConnected(void){
+static void IfUSBConnected(void){
 	static u8 usbstatus=0;
 	if(usbstatus!=Get_USBConnectState()){//USB连接状态发生了改变.
-		usbstatus=Get_USBConnectState();//记录新的状态
-		if(usbstatus==CONFIGURED){//提示USB连接成功		
+		if(Get_USBConnectState()==CONFIGURED){//提示USB连接成功		
 			LED_A=LED_ON;//DS1亮		
 		}else{//提示USB断开
 			LED_A=LED_OFF;//DS1灭
 		}
+		usbstatus=Get_USBConnectState();//记录新的状态
 	}
 }
