@@ -6,6 +6,6 @@
 #define KEY	PBin(2)
 
 void KEY_Init(void);
-void Key_Touch(void);
+
 
 #endif

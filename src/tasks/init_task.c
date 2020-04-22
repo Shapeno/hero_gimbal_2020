@@ -198,9 +198,9 @@ void Judge_Task(void*p_arg){
 *@brief	程序和系统监控任务
 */
 void Monitor_Task(void*p_arg){
-	portTickType currentTime;
+//	portTickType currentTime;
 	while(1){
-		currentTime = xTaskGetTickCount();	//获取当前系统时间
+//		currentTime = xTaskGetTickCount();	//获取当前系统时间
 	
 		MonitorPrc();
 		

@@ -95,12 +95,12 @@ uint8_t OLED_Button(void)
 {
 	static uint8_t _Button_Val=0;
 	static uint8_t _Button_Val_last=0;
-	static bool	_Button_Change=0;
+//	static bool	_Button_Change=0;
 	static portTickType currentTime;
 	static portTickType KeyChangeTime;
 	uint16_t ad1;
 	
-	_Button_Change=0;
+//	_Button_Change=0;
 	_Button_Val_last=_Button_Val;
 	Button_Change=0;
 	Button_Val_last=Button_Val;
@@ -141,7 +141,7 @@ uint8_t OLED_Button(void)
 	if(_Button_Val!=_Button_Val_last)
 	{
 		KeyChangeTime=xTaskGetTickCount();
-		_Button_Change=1;
+//		_Button_Change=1;
 	}
 	KeyTime=xTaskGetTickCount()-KeyChangeTime;
 	if(KeyTime>50)Button_Val=_Button_Val;
