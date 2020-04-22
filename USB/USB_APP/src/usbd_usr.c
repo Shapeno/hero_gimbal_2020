@@ -1,7 +1,6 @@
 #include "usbd_usr.h"
 #include "usb_dcd_int.h"
 #include <stdio.h> 
-#include "usbd_cdc_vcp.h"
 #include "usbd_desc.h"
 #include "sys.h" 
 //////////////////////////////////////////////////////////////////////////////////	 
@@ -61,14 +60,14 @@ USBD_Usr_cb_TypeDef USR_cb =
 //USB Device 用户自定义初始化函数
 void USBD_USR_Init(void)
 {
-	usb_printf(1,"Init\r\n");
+//	usb_printf(1,"Init\r\n");
 	////printf("USBD_USR_Init\r\n");
 } 
 //USB Device 复位
 //speed:USB速度,0,高速;1,全速;其他,错误.
 void USBD_USR_DeviceReset (uint8_t speed)
 {
-	usb_printf(1,"Reset\r\n");
+//	usb_printf(1,"Reset\r\n");
 	switch (speed)
 	{
 		case USB_OTG_SPEED_HIGH:
@@ -85,7 +84,7 @@ void USBD_USR_DeviceReset (uint8_t speed)
 //USB Device 配置成功
 void USBD_USR_DeviceConfigured (void)
 {
-	usb_printf(1,"Configured\r\n");
+//	usb_printf(1,"Configured\r\n");
     bDeviceState=CONFIGURED;
 	//printf("MSC Interface started.\r\n"); 
 } 
@@ -101,28 +100,28 @@ void USBD_USR_DeviceSuspended(void)
 	USBD_DeviceDesc[5]=0x00;                       /*bDeviceSubClass*/
 	USBD_DeviceDesc[6]=0x00;                       /*bDeviceProtocol*/
 #endif
-	usb_printf(1,"Suspended\r\n");
+//	usb_printf(1,"Suspended\r\n");
     bDeviceState=SUSPENDED;
 	//printf("Device In suspend mode.\r\n");
 } 
 //USB Device恢复
 void USBD_USR_DeviceResumed(void)
 { 	
-	usb_printf(1,"Resumed\r\n");
+//	usb_printf(1,"Resumed\r\n");
 	bDeviceState = ATTACHED; 
 	//printf("Device Resumed\r\n");
 }
 //USB Device连接成功
 void USBD_USR_DeviceConnected (void)
 {
-	usb_printf(1,"Connected\r\n");
+//	usb_printf(1,"Connected\r\n");
 	bDeviceState=1;
 	//printf("USB Device Connected.\r\n");
 }
 //USB Device未连接
 void USBD_USR_DeviceDisconnected (void)
 {
-	usb_printf(1,"Disconnected\r\n");
+//	usb_printf(1,"Disconnected\r\n");
 	bDeviceState=UNCONNECTED;
 	//printf("USB Device Disconnected.\r\n");
 } 
