@@ -45,14 +45,19 @@
 #define VFRICTION0_POSITION_KD_DEFAULTS 50
 //大弹丸速度(m/s)换算到摩擦轮转速速度(rpm)1.357*
 #define BULLET_SPEED_TO_MOTOR_SPEED	(272.837f)
+//启动模式时间
+#define STARTUP_TIME 0
+//自旋速度
+#define CHASSIS_ROTATE_SPEED 100
 
 /// @brief 云台的控制模式
 typedef enum{
-	PREPARE_STATE,	///<准备模式
-	NORMAL_STATE,	///<正常模式
-	AUTOAIM_STATE,	///<自瞄模式
-	BS_STATE,		///<大符模式
-	STOP_STATE,		///<停止模式
+	STARTUP_STATE,			///<等待软硬件启动
+	PREPARE_STATE,			///<准备模式
+	FOLLOW_UP_STATE,		///<随动(驾驶)模式
+	FREE_VIEW_STATE,		///<自由视角模式
+	CHASSIS_ROTATE_STATE,	///<底盘旋转模式
+	STOP_STATE,				///<停止模式
 }WorkState_e;
 
 #define CHASSIS_MOTOR_ROTATE_PID_DEFAULT \
@@ -60,7 +65,7 @@ typedef enum{
 	0,\
 	0,\
 	{0,0},\
-	4.50f,\
+	1.50f,\
 	0.0f,\
 	0.0f,\
 	0,\
@@ -70,7 +75,7 @@ typedef enum{
 	1000,\
 	1500,\
 	0,\
-	5000,\
+	1024,\
 	0,\
 	0,\
 	0,\
@@ -139,7 +144,7 @@ typedef enum{
 	1000,\
 	1500,\
 	0,\
-	5000,\
+	25000,\
 	0,\
 	0,\
 	0,\
@@ -333,14 +338,16 @@ typedef enum{
 ///控制函数
 void ControlVariableInit(void);
 void ControlPrc(void);
-void GimbalControlModeSwitch(void);
-void WorkStateChange(void);
-void GMPitchControlLoop(void);
-void GMYawControlLoop(void);
-void GimbalMotorOutput(void);
-void CMControlLoop(void);
-void ShootLimitSwitch(void);
+static void GimbalControlModeSwitch(void);
+static void Remapping_Yaw_Angle(void);
+static void WorkStateChange(void);
+static void GMPitchControlLoop(void);
+static void GMYawControlLoop(void);
+static void GimbalMotorOutput(void);
+static void CMControlLoop(void);
+static void ShootLimitSwitch(void);
 ///接口函数
+void Start_Pre_Rotate(void);
 void StartBigFric(void);
 void StopBigFric(void);
 void SetWorkState(WorkState_e state);
@@ -354,6 +361,8 @@ void SmallBulletFirc_Start_Prc(void);
 void SmallBulletFirc_Stop_Prc(void);
 void BigBulletRammer_Control_Prc(void);
 void BigBulletFric_Control_Prc(void);
+int16_t Get_Rremap_Yaw_Cycle(void);
+float Get_Rremap_Yaw_Angle(void);
 
 /*debug fuctons of PID
 PID在线调参

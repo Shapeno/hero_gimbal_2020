@@ -26,15 +26,16 @@
 #include "power.h"
 #include "can.h"
 #include "timer.h"
-#include "imu.h"
+#include "bsp_imu.h"
 #include "spi.h"
-#include "gun.h"
+#include "switch.h"
 
 #include "usart2.h"
 #include "usart3.h"
 #include "usart6.h"
 #include "uart7.h"
 #include "uart8.h"
+#include "usbd_cdc_vcp.h"
 
 #include "dbus.h"
 #include "laser.h"

@@ -27,15 +27,16 @@
 
 ///	@brief	输入模式
 static InputMode_e input_mode = REMOTE_INPUT;
-	InputMode_e GetInputMode(void){return REMOTE_INPUT;}
+	InputMode_e GetInputMode(void){return input_mode;}
 static InputMode_e input_mode_last = REMOTE_INPUT;
 ///	@brief	云台目标位置
 static Gimbal_Target_t	Gimbal_Target = {0};
 	Gimbal_Target_t GetGimbalTarget(void){return Gimbal_Target;}
+	void SetGimbalTarget_P(float targ){Gimbal_Target.pitch_angle_target=targ;}
 ///	@brief	底盘目标速度
 static ChassisSpeed_Target_t ChassisSpeed_Target = {0};
 	ChassisSpeed_Target_t GetChassisSpeedTarget(void){return ChassisSpeed_Target;}
-
+	
 
 
 /**
@@ -105,7 +106,10 @@ void RcCmdPrc(void){
 void SetInputMode(void){
 	input_mode_last=input_mode;
 	if (GetRcData().rc.s2.up)input_mode=REMOTE_INPUT;
-	if (GetRcData().rc.s2.mid)input_mode=KEY_MOUSE_INPUT;
+	else if (GetRcData().rc.s2.mid)input_mode=KEY_MOUSE_INPUT;
+	else if (GetRcData().rc.s2.down){
+		input_mode=STOP;
+	}
 	if (input_mode!=input_mode_last){	///<输入模式发生改变
 		
 	}
@@ -116,14 +120,14 @@ void SetInputMode(void){
 void RemoteCmdPrc(Remote_Data_t *rc){
 	ChassisSpeed_Target.forward_back_target = rc->ch[3] * STICK_TO_CHASSIS_SPEED_REF_FACT;
 	ChassisSpeed_Target.left_right_target   = rc->ch[2] * STICK_TO_CHASSIS_SPEED_REF_FACT;
+	ChassisSpeed_Target.rotate_target = rc->ch[0] * STICK_TO_CHASSIS_SPEED_REF_FACT;
 	Gimbal_Target.pitch_angle_target -= rc->ch[1] * STICK_TO_PITCH_ANGLE_INC_FACT;
-	Gimbal_Target.yaw_angle_target   += rc->ch[0] * STICK_TO_YAW_ANGLE_INC_FACT;
+	Gimbal_Target.yaw_angle_target   -= rc->ch[0] * STICK_TO_YAW_ANGLE_INC_FACT;
 	GimbalAngleLimit();
-	if(rc->s2.down){
-	Gimbal_Target.pitch_angle_target =10;
-	Gimbal_Target.yaw_angle_target   =0;	
-	}
 	
+	if(rc->ch[4]<-300)Start_Pre_Rotate();//启动预自旋
+	
+	if(GetWorkState()!=PREPARE_STATE&&GetWorkState()!=STARTUP_STATE)SetWorkState(FOLLOW_UP_STATE);
 	RemoteShootCmdPrc(rc);
 }
 
@@ -157,20 +161,51 @@ void RemoteShootCmdPrc(Remote_Data_t *rc){
 */
 void MouseKeyCmdPrc(Mouse_Data_t *mouse, Key_Data_t *key){
 	///<底盘目标速度
+	VAL_LIMIT(mouse->x, -150, 150);
 	if(key->SHIFT){
-		ChassisSpeed_Target.forward_back_target	=	key->W * HIGH_FORWARD_BACK_SPEED;
-		ChassisSpeed_Target.forward_back_target	=	-key->S * HIGH_FORWARD_BACK_SPEED;
-		ChassisSpeed_Target.left_right_target	=	key->D * HIGH_LEFT_RIGHT_SPEED;
-		ChassisSpeed_Target.left_right_target	=	-key->A * HIGH_LEFT_RIGHT_SPEED;
+		ChassisSpeed_Target.forward_back_target	=	(int16_t)(key->W * HIGH_FORWARD_BACK_SPEED)
+													-(int16_t)(key->S * HIGH_FORWARD_BACK_SPEED);
+		ChassisSpeed_Target.left_right_target	=	(int16_t)(key->D * HIGH_LEFT_RIGHT_SPEED)
+													-(int16_t)(key->A * HIGH_LEFT_RIGHT_SPEED);
+		ChassisSpeed_Target.rotate_target		=	(int16_t)(mouse->x * MOUSE_TO_ROTATE_INC_FACT);
 	}
 	else{
-		ChassisSpeed_Target.forward_back_target	=	key->W * NORMAL_FORWARD_BACK_SPEED;
-		ChassisSpeed_Target.forward_back_target	=	-key->S * NORMAL_FORWARD_BACK_SPEED;
-		ChassisSpeed_Target.left_right_target	=	key->D * NORMAL_LEFT_RIGHT_SPEED;
-		ChassisSpeed_Target.left_right_target	=	-key->A * NORMAL_LEFT_RIGHT_SPEED;
+		ChassisSpeed_Target.forward_back_target	=	(int16_t)(key->W * NORMAL_FORWARD_BACK_SPEED)
+													-(int16_t)(key->S * NORMAL_FORWARD_BACK_SPEED);
+		ChassisSpeed_Target.left_right_target	=	(int16_t)(key->D * NORMAL_LEFT_RIGHT_SPEED)
+													-(int16_t)(key->A * NORMAL_LEFT_RIGHT_SPEED);
+		ChassisSpeed_Target.rotate_target		=	(int16_t)(mouse->x * MOUSE_TO_ROTATE_INC_FACT);
+	}
+	///<启动大陀螺和底盘预自旋
+//	if(GetLastRcData().key.F!=key->F&&key->F==1)
+//	{
+//		Start_Pre_Rotate();
+//		if(GetWorkState()!=PREPARE_STATE&&GetWorkState()!=STARTUP_STATE){
+//			if(GetWorkState()!=CHASSIS_ROTATE_STATE)SetWorkState(CHASSIS_ROTATE_STATE);
+//			else SetWorkState(FOLLOW_UP_STATE);	
+//		}			
+//	}
+	if(key->F==1){
+			Start_Pre_Rotate();
+	}
+	if(GetWorkState()!=PREPARE_STATE&&GetWorkState()!=STARTUP_STATE&&GetWorkState()!=FREE_VIEW_STATE){
+		if(key->F==1){
+			SetWorkState(CHASSIS_ROTATE_STATE);
+		}else{
+			SetWorkState(FOLLOW_UP_STATE);	
+		}
+	}
+	///<启动自由视角模式
+	if(GetLastRcData().mouse.press_r!=mouse->press_r){
+		if(GetWorkState()!=PREPARE_STATE&&GetWorkState()!=STARTUP_STATE&&GetWorkState()!=CHASSIS_ROTATE_STATE){
+				if(mouse->press_r==1){
+					SetWorkState(FREE_VIEW_STATE);
+				}
+				else SetWorkState(FOLLOW_UP_STATE);	
+		}
 	}
 	///<云台目标位置
-	VAL_LIMIT(mouse->x, -150, 150);
+	VAL_LIMIT(mouse->x, -100, 100);
 	VAL_LIMIT(mouse->y, -150, 150);
 	Gimbal_Target.pitch_angle_target -= mouse->y * MOUSE_TO_PITCH_ANGLE_INC_FACT;
 	Gimbal_Target.yaw_angle_target   += mouse->x * MOUSE_TO_YAW_ANGLE_INC_FACT;

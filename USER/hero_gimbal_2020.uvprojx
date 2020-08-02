@@ -49,7 +49,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\OBJ\</OutputDirectory>
-          <OutputName>Scu_Rm2018</OutputName>
+          <OutputName>Scu_Rm2020</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -336,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER</Define>
+              <Define>STM32F427_437xx,USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,DUAL_COM</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\FWLIB\STM32F4xx_StdPeriph_Driver\inc;..\USER;..\FWLIB\inc;..\include\bsp;..\include\system;..\freeRTOS\include;..\freeRTOS\portable\RVDS\ARM_CM4F;..\include\tasks;..\USMART</IncludePath>
+              <IncludePath>..\CORE;..\FWLIB\STM32F4xx_StdPeriph_Driver\inc;..\USER;..\FWLIB\inc;..\include\bsp;..\include\system;..\freeRTOS\include;..\freeRTOS\portable\RVDS\ARM_CM4F;..\include\tasks;..\USMART;..\USB\USB_APP\interface;..\USB\STM32_USB_OTG_Driver\inc;..\USB\STM32_USB_Device_Library\Class\cdc\inc;..\USB\STM32_USB_Device_Library\Core\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -383,11 +383,6 @@
           <GroupName>USER</GroupName>
           <Files>
             <File>
-              <FileName>readme.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\readme.txt</FilePath>
-            </File>
-            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\main.c</FilePath>
@@ -408,19 +403,14 @@
           <GroupName>system</GroupName>
           <Files>
             <File>
+              <FileName>sys.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\system\sys.c</FilePath>
+            </File>
+            <File>
               <FileName>delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\system\delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>visualscope.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\system\visualscope.c</FilePath>
-            </File>
-            <File>
-              <FileName>pid_regulator.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\system\pid_regulator.c</FilePath>
             </File>
             <File>
               <FileName>ramp.c</FileName>
@@ -428,9 +418,14 @@
               <FilePath>..\src\system\ramp.c</FilePath>
             </File>
             <File>
-              <FileName>sys.c</FileName>
+              <FileName>pid_regulator.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\system\sys.c</FilePath>
+              <FilePath>..\src\system\pid_regulator.c</FilePath>
+            </File>
+            <File>
+              <FileName>visualscope.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\system\visualscope.c</FilePath>
             </File>
             <File>
               <FileName>data_fifo.c</FileName>
@@ -538,6 +533,11 @@
           <GroupName>tasks</GroupName>
           <Files>
             <File>
+              <FileName>init_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tasks\init_task.c</FilePath>
+            </File>
+            <File>
               <FileName>control_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\tasks\control_task.c</FilePath>
@@ -546,11 +546,6 @@
               <FileName>judge_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\tasks\judge_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>init_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tasks\init_task.c</FilePath>
             </File>
             <File>
               <FileName>can_task.c</FileName>
@@ -567,11 +562,26 @@
               <FileType>1</FileType>
               <FilePath>..\src\tasks\monitor_task.c</FilePath>
             </File>
+            <File>
+              <FileName>OLED_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tasks\OLED_task.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>bsp</GroupName>
           <Files>
+            <File>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\timer.c</FilePath>
+            </File>
             <File>
               <FileName>beep.c</FileName>
               <FileType>1</FileType>
@@ -588,14 +598,19 @@
               <FilePath>..\src\bsp\led.c</FilePath>
             </File>
             <File>
+              <FileName>power.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\power.c</FilePath>
+            </File>
+            <File>
               <FileName>dbus.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\dbus.c</FilePath>
             </File>
             <File>
-              <FileName>gun.c</FileName>
+              <FileName>switch.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\bsp\gun.c</FilePath>
+              <FilePath>..\src\bsp\switch.c</FilePath>
             </File>
             <File>
               <FileName>laser.c</FileName>
@@ -603,34 +618,9 @@
               <FilePath>..\src\bsp\laser.c</FilePath>
             </File>
             <File>
-              <FileName>spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>timer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\timer.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart6.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\usart6.c</FilePath>
-            </File>
-            <File>
-              <FileName>imu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\imu.c</FilePath>
-            </File>
-            <File>
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\adc.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\usart2.c</FilePath>
             </File>
             <File>
               <FileName>can.c</FileName>
@@ -638,14 +628,34 @@
               <FilePath>..\src\bsp\can.c</FilePath>
             </File>
             <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_imu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\bsp_imu.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\usart2.c</FilePath>
+            </File>
+            <File>
               <FileName>usart3.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\usart3.c</FilePath>
             </File>
             <File>
-              <FileName>power.c</FileName>
+              <FileName>usart6.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\bsp\power.c</FilePath>
+              <FilePath>..\src\bsp\usart6.c</FilePath>
             </File>
             <File>
               <FileName>uart7.c</FileName>
@@ -656,11 +666,6 @@
               <FileName>uart8.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\uart8.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp\bsp.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -736,6 +741,76 @@
               <FileName>usmart_str.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\USMART\usmart_str.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_OTG</GroupName>
+          <Files>
+            <File>
+              <FileName>usb_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_dcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd_int.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_OTG_Driver\src\usb_dcd_int.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_DEVICE</GroupName>
+          <Files>
+            <File>
+              <FileName>usbd_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ioreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_ioreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_req.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\src\usbd_req.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Class\cdc\src\usbd_cdc_core.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>USB_APP</GroupName>
+          <Files>
+            <File>
+              <FileName>usb_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usb_bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_cdc_vcp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_cdc_vcp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_desc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_desc.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_usr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_APP\src\usbd_usr.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -67,7 +67,7 @@ void delay_ms(uint16_t nms)
 }
 //延时nms，不会引起任务调度
 //nms：要延时的ms数
-void delay_xms(uint32_t nms)
+void delay_xms(uint16_t nms)
 {
 	u32 i;
 	for(i=0;i<nms;i++)delay_us(1000);

@@ -40,6 +40,12 @@ static uint8_t data_CAN2_0x200[8]={0};
 static uint8_t data_CAN2_0x1FF[8]={0};
 static uint8_t data_CAN2_0x2FF[8]={0};
 
+/// @brief 从底盘来获取裁判系统枪口数据
+static gun_data_t Gun_Data={0};
+gun_data_t Get_Gun_Data(){return Gun_Data;}
+/// @brief 从底盘来获取裁判系统机器人状态数据
+static robot_status_t Robot_Status={0};
+robot_status_t Get_Robot_Status(){return Robot_Status;}
 //------------------------------------------------------------
 //电机相关函数
 //------------------------------------------------------------
@@ -172,12 +178,14 @@ void CAN_id_send_Print(void){
 /**
 @brief 获取电机的数据
 @param device_seq必须是电机的设备序列号
+@param last_data:false-当前数据，true-上一次数据
 @return 设备对应的Motor_Data_t类型的数据，
 	所有电机都有角度信息，但不是都有其他信息
 	详细参考Motor_Data_t结构体注释
 */
-Motor_Data_t GetMotorData(uint8_t device_seq){
+Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data){
 	if(can_cfg_info[device_seq-1].type>Chassis){
+		if(last_data)return motor_last_data[device_seq-1];
 		return motor_data[device_seq-1];
 	}
 	else {
@@ -337,22 +345,49 @@ void SendMotorCurrent(uint8_t device_seq){
 @param rotate_target		自旋速度
 @param chasis_heat			底盘热量
 */
-void SendChassisSpeed(CAN_TypeDef *CANx, int16_t forward_back_target, int16_t left_right_target, int16_t rotate_target, int16_t chasis_heat){
+void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W){
     CanTxMsg tx_message;
-    tx_message.StdId = 0x401;
+    tx_message.StdId = Gimbal_ID;
     tx_message.IDE = CAN_Id_Standard;
     tx_message.RTR = CAN_RTR_Data;
     tx_message.DLC = 0x08;
-    tx_message.Data[0] = (uint8_t)(forward_back_target >> 8);
-    tx_message.Data[1] = (uint8_t)forward_back_target;
-    tx_message.Data[2] = (uint8_t)(left_right_target >> 8);
-    tx_message.Data[3] = (uint8_t)left_right_target;
-    tx_message.Data[4] = (uint8_t)(rotate_target >> 8);
-    tx_message.Data[5] = (uint8_t)rotate_target;
-    tx_message.Data[6] = (uint8_t)(chasis_heat >> 8);
-    tx_message.Data[7] = (uint8_t)chasis_heat;
+    tx_message.Data[0] = MoveData;
+    tx_message.Data[1] = mode;
+    tx_message.Data[2] = (uint8_t)(Vx >> 8);
+    tx_message.Data[3] = (uint8_t)Vx;
+    tx_message.Data[4] = (uint8_t)(Vy >> 8);
+    tx_message.Data[5] = (uint8_t)Vy;
+    tx_message.Data[6] = (uint8_t)(W >> 8);
+    tx_message.Data[7] = (uint8_t)W;
     CAN_Transmit(CANx,&tx_message);
 }
+
+void RecieveChassisData(CanRxMsg * msg)
+{
+	switch (msg->Data[0])
+	{
+		case GunData:
+		{
+			Gun_Data.bulletFreq=msg->Data[1];
+			Gun_Data.bulletSpeed=(msg->Data[2]<<24)|(msg->Data[3]<<16)|(msg->Data[4]<<8)|msg->Data[5];
+			Gun_Data.shooterHeat=(msg->Data[6]<<8)|msg->Data[7];
+		}break;
+		case RoboStateData:
+		{
+			Robot_Status.robot_id=msg->Data[1];
+			Robot_Status.robot_level=msg->Data[2];
+			Robot_Status.gun_cooling_rate=(msg->Data[3]<<8)|msg->Data[4];
+			Robot_Status.gun_cooling_limit=(msg->Data[5]<<8)|msg->Data[6];
+			Robot_Status.gun_speed_limit=msg->Data[7];
+		}break;
+		
+	}
+	
+}
+
+
+
+
 //------------------------------------------------------------
 //初始化函数
 //------------------------------------------------------------
@@ -376,7 +411,7 @@ void CAN1_Init(void){
 	GPIO_Init(GPIOD, &gpio);
 	nvic.NVIC_IRQChannel = CAN1_RX0_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 1;
-	nvic.NVIC_IRQChannelSubPriority = 1;
+	nvic.NVIC_IRQChannelSubPriority = 0;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&nvic);
 	nvic.NVIC_IRQChannel = CAN1_TX_IRQn;
@@ -421,14 +456,15 @@ void CAN2_Init(void){
 	GPIO_InitTypeDef       gpio;
 	NVIC_InitTypeDef       nvic;
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);//测试
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1|RCC_APB1Periph_CAN2, ENABLE);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource12, GPIO_AF_CAN2);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource13, GPIO_AF_CAN2); 
 	gpio.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 ;
+	gpio.GPIO_OType = GPIO_OType_PP;
+	gpio.GPIO_Speed = GPIO_Speed_100MHz;
 	gpio.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_Init(GPIOB, &gpio);
-	nvic.NVIC_IRQChannel = CAN2_RX0_IRQn;
+	nvic.NVIC_IRQChannel = CAN2_RX1_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 2;
 	nvic.NVIC_IRQChannelSubPriority = 1;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
@@ -456,20 +492,14 @@ void CAN2_Init(void){
 	can_filter.CAN_FilterNumber=14;	//CAN1、CAN2共用28各过滤器，CAN1用0~13
 	can_filter.CAN_FilterMode=CAN_FilterMode_IdMask;
 	can_filter.CAN_FilterScale=CAN_FilterScale_32bit;
-	
-//	can_filter.CAN_FilterIdHigh= (((u32)0x427<<3)&0xFFFF0000)>>16;    //要过滤的ID高位
-//  can_filter.CAN_FilterIdLow= (((u32)0x427<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF; //要过滤的ID低位
-//  can_filter.CAN_FilterMaskIdHigh= 0xFFFF;   //过滤器高16位每位必须匹配
-//  can_filter.CAN_FilterMaskIdLow= 0xFFFF;   //过滤器低16位每位必须匹配
-	
 	can_filter.CAN_FilterIdHigh=0x0000;
 	can_filter.CAN_FilterIdLow=0x0000;
 	can_filter.CAN_FilterMaskIdHigh=0x0000;
-	can_filter.CAN_FilterMaskIdLow=0x0400;
-	can_filter.CAN_FilterFIFOAssignment=CAN_FilterFIFO0;	
+	can_filter.CAN_FilterMaskIdLow=0x0000;
+	can_filter.CAN_FilterFIFOAssignment=CAN_FilterFIFO1;	
 	can_filter.CAN_FilterActivation=ENABLE;
 	CAN_FilterInit(&can_filter);
-	CAN_ITConfig(CAN2,CAN_IT_FMP0,ENABLE);
+	CAN_ITConfig(CAN2,CAN_IT_FMP1,ENABLE);
 	CAN_ITConfig(CAN2,CAN_IT_TME,ENABLE);
 }
 
@@ -480,6 +510,9 @@ void angle_convert(uint8_t seq);
 
 void can_msg_encode( CanRxMsg * msg, Can_Channel_e CAN_x){
 	int i=0;
+	///接收底盘数据
+	if(msg->StdId==Chassis_ID)RecieveChassisData(msg);
+	///接收电机数据
 	for(;i<CAN_DEVICE_NUM;i++){
 		if(can_cfg_info[i].ch==CAN_x){
 			if(msg->StdId==can_cfg_info[i].id_recieve){
@@ -540,10 +573,10 @@ void can_msg_encode( CanRxMsg * msg, Can_Channel_e CAN_x){
 void angle_convert(uint8_t seq){
 	motor_data[seq-1].angle=(motor_data[seq-1].ecd_angle-can_cfg_info[seq-1].ecd_bias)*360.00/Full_Ecd_Angle;
 	if(motor_data[seq-1].angle>180){
-		motor_data[seq-1].angle-=360.0;
+		motor_data[seq-1].angle-=360.0f;
 	}
 	else if(motor_data[seq-1].angle<-180){
-		motor_data[seq-1].angle+=360.0;
+		motor_data[seq-1].angle+=360.0f;
 	}
 	if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)>300)motor_data[seq-1].cycles--;
 	else if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)<-300)motor_data[seq-1].cycles++;
@@ -557,10 +590,10 @@ void CAN1_TX_IRQHandler(void){
 void CAN1_RX0_IRQHandler(void){
 	CanRxMsg rx_message;
 	if(CAN_GetITStatus(CAN1,CAN_IT_FMP0)!= RESET){
-		CAN_ClearITPendingBit(CAN1, CAN_IT_FF0);
-		CAN_ClearFlag(CAN1, CAN_FLAG_FF0); 
+		CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
 		CAN_Receive(CAN1, CAN_FIFO0, &rx_message);
 		can_msg_encode(&rx_message,CAN_1);
+		
 	}
 }
 
@@ -570,12 +603,13 @@ void CAN2_TX_IRQHandler(void){
   }
 }
 
-void CAN2_RX0_IRQHandler(void){
+void CAN2_RX1_IRQHandler(void){
 	CanRxMsg rx_message;
-	if(CAN_GetITStatus(CAN2,CAN_IT_FMP0)!= RESET){
-		CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
-		CAN_Receive(CAN2, CAN_FIFO0, &rx_message);
+	if(CAN_GetITStatus(CAN2,CAN_IT_FMP1)!= RESET){
+		CAN_ClearITPendingBit(CAN2, CAN_IT_FMP1);
+		CAN_Receive(CAN2, CAN_FIFO1, &rx_message);
 		can_msg_encode(&rx_message,CAN_2);
+		
 	}
 }
 

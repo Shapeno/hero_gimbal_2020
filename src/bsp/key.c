@@ -1,6 +1,8 @@
 #include "key.h"
 #include "delay.h"
 #include "led.h"
+static void Key_Touch(void);
+
 /// @brief初始化函数
 void KEY_Init(void){
   GPIO_InitTypeDef  GPIO_InitStructure;
@@ -29,14 +31,14 @@ void KEY_Init(void){
 /// @brief中断函数
 void EXTI2_IRQHandler(void){
   if(EXTI_GetITStatus(EXTI_Line2)){
-	  delay_ms(10);
+	  delay_xms(10);
 		if(KEY==1)
 		  Key_Touch();
   }
 	EXTI_ClearITPendingBit(EXTI_Line2);
 }
 /// @brief中断用户函数
-void Key_Touch(void){
+static void Key_Touch(void){
 	LED_Red = ~LED_Red;
 	LED_Green = ~LED_Green;
 }

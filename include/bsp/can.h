@@ -37,9 +37,9 @@
 #define CAN_DEVICE_NUM 		6
 //Yaw轴电机
 #define YAW_MOTOR			1
-#define	YAW_MOTOR_ID		0
-#define YAW_MOTOR_TYPE		RM6623
-#define YAW_MOTOR_CH		CAN_1
+#define	YAW_MOTOR_ID		1
+#define YAW_MOTOR_TYPE		GM6020
+#define YAW_MOTOR_CH		CAN_2
 #define YAW_MOTOR_BIAS		7260
 //Pitch轴电机
 #define PIT_MOTOR			2
@@ -67,11 +67,13 @@
 #define FRIC_MID_MOTOR_BIAS		0
 //拨弹轮
 #define RAMMER_MOTOR			6
-#define	RAMMER_MOTOR_ID			
-#define RAMMER_MOTOR_TYPE		
-#define RAMMER_MOTOR_CH			
+#define	RAMMER_MOTOR_ID			4
+#define RAMMER_MOTOR_TYPE		C620
+#define RAMMER_MOTOR_CH			CAN_2
 #define RAMMER_MOTOR_BIAS		0
 
+#define Chassis_ID	0x402
+#define Gimbal_ID	0x401
 
 //------------------------------------------------------------
 //枚举类型与数据结构体定义
@@ -111,7 +113,7 @@ typedef struct
 	int16_t 		ecd_bias;		///<码盘角度计算的参考偏移量
 }Can_Cfg_Info_t;
 /**
-@brief 电机数据结构体(*为有这个数据)
+@brief 电机数据结构体(*为有这项数据)
 type	angle	speed	torque	temperature
 C610	*		*		*
 C620	*		*		*		*
@@ -130,6 +132,45 @@ typedef struct
 	int16_t  torque;
 	int8_t  temperature;		
 }Motor_Data_t;
+/**
+ * @brief 接收底盘信息的命令码
+ * 
+ */
+typedef enum
+{
+	MoveData = 0x00,
+}Gimbal_Command_ID_e;
+/**
+ * @brief 
+ * 
+ */
+typedef enum
+{
+	GunData 	= 	0x01,
+	RoboStateData =	0x02,
+}Chassis_Command_ID_e;
+/**
+ * @brief 裁判系统的枪口数据
+ * 
+ */
+typedef __packed struct
+{
+    uint8_t 	bulletFreq;
+    float  	bulletSpeed;
+    uint16_t   shooterHeat;
+}gun_data_t;
+/**
+ * @brief 裁判系统机器人状态数据
+ * 
+ */
+typedef __packed struct
+{
+    uint8_t 	robot_id;
+    uint8_t 	robot_level;
+    uint16_t 	gun_cooling_rate;
+    uint16_t	gun_cooling_limit;
+    uint8_t 	gun_speed_limit;
+}robot_status_t;
 
 void CAN1_Init(void);
 void CAN2_Init(void);
@@ -137,10 +178,12 @@ void CAN2_Init(void);
 void CAN_Motor_Config(uint8_t seq,uint32_t can_id,Device_Type_e device,Can_Channel_e Can_x,int16_t bias);
 void CAN_ID_CHECK(void);
 void CAN_id_send_Print(void);
-Motor_Data_t GetMotorData(uint8_t device_seq);
+Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data);
 void SetMotorCurrent(uint8_t device_seq, int16_t current);
 void SendMotorCurrent(uint8_t device_seq);
 
-void SendChassisSpeed(CAN_TypeDef *CANx, int16_t forward_back_target, int16_t left_right_target, int16_t rotate_target, int16_t chasis_heat);
+void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W);
+gun_data_t Get_Gun_Data(void);
+robot_status_t Get_Robot_Status(void);
 
 #endif 
