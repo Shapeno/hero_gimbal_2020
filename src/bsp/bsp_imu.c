@@ -17,7 +17,7 @@
 #include "spi.h"
 
 #define BOARD_DOWN (1)   
-#define IST8310
+//#define IST8310
 #define MPU_HSPI hspi5
 #define MPU_NSS_LOW GPIO_ResetBits(GPIOF, GPIO_Pin_6)
 #define MPU_NSS_HIGH GPIO_SetBits(GPIOF, GPIO_Pin_6)
@@ -306,14 +306,11 @@ void mpu_get_data()
     mpu_data.gx = ((mpu_buff[8]  << 8 | mpu_buff[9])  - mpu_data.gx_offset);
     mpu_data.gy = ((mpu_buff[10] << 8 | mpu_buff[11]) - mpu_data.gy_offset);
     mpu_data.gz = ((mpu_buff[12] << 8 | mpu_buff[13]) - mpu_data.gz_offset);
-	
-//	if((imu.pit<5&&imu.pit>-5)&&(imu.rol<5&&imu.rol>-5))
-//	if(now_update<10000)
-//	{
-//    ist8310_get_data(ist_buff);
-//    memcpy(&mpu_data.mx, ist_buff, 6);
-//	}
-//	else memset(&mpu_data.mx,0,6);
+#ifdef IST8310
+	ist8310_get_data(ist_buff);
+    memcpy(&mpu_data.mx, ist_buff, 6);
+#endif
+    
 
     memcpy(&imu.ax, &mpu_data.ax, 6 * sizeof(int16_t));
 
@@ -366,8 +363,8 @@ uint8_t mpu_device_init(void)
 	uint8_t MPU6500_Init_Data[10][2] = {{ MPU6500_PWR_MGMT_1, 0x80 },     /* Reset Device */ 
 																			{ MPU6500_PWR_MGMT_1, 0x03 },     /* Clock Source - Gyro-Z */ 
 																			{ MPU6500_PWR_MGMT_2, 0x00 },     /* Enable Acc & Gyro */ 
-																			{ MPU6500_CONFIG, 0x04 },         /* LPF 41Hz */ 
-																			{ MPU6500_GYRO_CONFIG, 0x18 },    /* +-2000dps */ 
+																			{ MPU6500_CONFIG, 0x07 },         /* LPF 41Hz */ 
+																			{ MPU6500_GYRO_CONFIG, 0x00 },    /* +-2000dps */ 
 																			{ MPU6500_ACCEL_CONFIG, 0x10 },   /* +-8G */ 
 																			{ MPU6500_ACCEL_CONFIG_2, 0x02 }, /* enable LowPassFilter  Set Acc LPF */ 
 																			{ MPU6500_USER_CTRL, 0x20 },};    /* Enable AUX */ 
@@ -435,7 +432,7 @@ void init_quaternion(void)
 	#ifdef BOARD_DOWN
 	if (hx < 0 && hy < 0) 
 	{
-		if (fabs(hx / hy) >= 1)
+		if (fabs((float)hx / hy) >= 1)
 		{
 			q0 = -0.005;
 			q1 = -0.199;
@@ -453,7 +450,7 @@ void init_quaternion(void)
 	}
 	else if (hx < 0 && hy > 0)
 	{
-		if (fabs(hx / hy)>=1)   
+		if (fabs((float)hx / hy)>=1)   
 		{
 			q0 = 0.005;
 			q1 = -0.199;
@@ -471,7 +468,7 @@ void init_quaternion(void)
 	}
 	else if (hx > 0 && hy > 0)
 	{
-		if (fabs(hx / hy) >= 1)
+		if (fabs((float)hx / hy) >= 1)
 		{
 			q0 = 0.0012;
 			q1 = -0.978;
@@ -489,7 +486,7 @@ void init_quaternion(void)
 	}
 	else if (hx > 0 && hy < 0)
 	{
-		if (fabs(hx / hy) >= 1)
+		if (fabs((float)hx / hy) >= 1)
 		{
 			q0 = 0.0025;
 			q1 = 0.978;

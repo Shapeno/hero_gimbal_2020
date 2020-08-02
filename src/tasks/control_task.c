@@ -32,7 +32,7 @@
 #include "judge_task.h"
 #include "command_task.h"
 #include "can_task.h"
-#include <main.h>
+#include <math.h>
 
 /// @brief PID初始化
 PID_Regulator_t GMPPositionPID    = GIMBAL_MOTOR_PITCH_POSITION_PID_DEFAULT;     
@@ -63,9 +63,8 @@ static WorkState_e work_state     = PREPARE_STATE;			//当前运行状态
 static bool start_pre_rotate=false;
 	void Start_Pre_Rotate(void){start_pre_rotate=true;}
 /// @brief	yaw轴重映射数据
-static int16_t remap_pos=0;
-static int16_t remap_cycle=0;
-static int16_t remap_angle=0;
+static float remap_pos=0;
+static float remap_angle=540;
 static int16_t remapped_yaw_cycle=0;
 	int16_t Get_Rremap_Yaw_Cycle(void){return remapped_yaw_cycle;}
 static float remapped_yaw_angle=0;///角度范围-180~180
@@ -107,6 +106,10 @@ static volatile uint8_t  ShootSpeed = 19;
 /// @brief  射频
 static volatile int16_t ShootFre   = 1600;
 
+/// @brief  底盘速度控制量
+static int16_t CM_left_right_target=0;
+static int16_t CM_forward_back_target=0;
+static int16_t CM_rotate_target=0;
 	
 /// @brief  控制变量初始化
 void ControlVariableInit(void){
@@ -129,94 +132,171 @@ void ControlVariableInit(void){
 
 /// @brief 控制主程序
 void ControlPrc(void){
-	if(Reach_Reset_Pos()==2)Remapping_Yaw_Angle();
+	if(start_pre_rotate&&(Reach_Reset_Pos()==3))Remapping_Yaw_Angle();
 	GimbalControlModeSwitch();
 	GMPitchControlLoop();
 	GMYawControlLoop();
 	GimbalMotorOutput();
-//  	CMControlLoop();
-	BigBulletFric_Control_Prc();
+  	CMControlLoop();
+//	BigBulletFric_Control_Prc();
 //	BigBulletRammer_Control_Prc();
 }
 
 static float YawAngleBias = 0.0f;
+static float YawIMUAngleBias = 0.0f;
 static float YawTargetBias = 0.0f;
 static float YawRemappedBias = 0.0f;
+static float PitchAngleLast =0;
 /// @brief 云台不同模式控制
 static void GimbalControlModeSwitch(void){
 	/*mode changed*/
 	if(work_state!=work_state_lastime)
 		WorkStateChange();
-	work_state_lastime=work_state;
+	
 	
 	switch(GetWorkState()){
 	/*start up mode*/
 		case STARTUP_STATE:{
+			work_state_lastime=work_state;//更新上一次状态
 			GMYPositionPID.ref = 0.0f;
 			GMYPositionPID.fdb = 0.0f;//-(GetMotorData(YAW_MOTOR).angle+360*GetMotorData(YAW_MOTOR).cycles)* GMYawRamp.Calc(&GMYawRamp);
-			if(xTaskGetTickCount() > STARTUP_TIME)	///< @brief 让云台进入陀螺仪控制
+			if(xTaskGetTickCount() > STARTUP_TIME){	///< @brief 让云台进入陀螺仪控制
 				work_state = PREPARE_STATE;
+			}
 		}break;
 	/*prepare mode*/
 		case PREPARE_STATE:{
-			GMYPositionPID.ref=GetGimbalTarget().yaw_angle_target;
-			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
+			work_state_lastime=work_state;//更新上一次状态
+			
+			GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
+			GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles);
+			
+			GMYPositionPID.ref=0;//(GetGimbalTarget().yaw_angle_target-YawTargetBias);
+			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawIMUAngleBias);
+			
 			//get the Encoder range
 			/////what if the switch is somethong wrong/////
+			CM_forward_back_target=GetChassisSpeedTarget().forward_back_target;
+			CM_left_right_target=GetChassisSpeedTarget().left_right_target;
 			if(start_pre_rotate){
+				CM_rotate_target=CHASSIS_ROTATE_SPEED;
 				//>第一次复位位置
-				static int16_t reset_pos_1=0;
+				static uint8_t resetstate=2;
+				static float reset_pos_1=0;
+				static float remap_pos_2=0;
+				static float remap_pos_3=0;
 				static int16_t Reset_Cycle_1=0;
-				SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,CHASSIS_ROTATE_SPEED);
-				if(Reach_Reset_Pos()==1)
-				{
-					reset_pos_1=GetMotorData(YAW_MOTOR,false).ecd_angle;
-					Reset_Cycle_1=GetMotorData(YAW_MOTOR,false).cycles;
-				}
+				static int16_t Reset_Cycle_2=0;
+				static int16_t Reset_Cycle_3=0;
+//				if(resetstate==1&&Reach_Reset_Pos()==1)
+//				{
+//					reset_pos_1=GetMotorData(YAW_MOTOR,false).angle;
+//					Reset_Cycle_1=GetMotorData(YAW_MOTOR,false).cycles;
+//					printf("reset_pos_1:%d\t",(int)reset_pos_1);
+//					printf("remap_pos_2:%d\t",(int)remap_pos_2);
+//					printf("Reset_Cycle_1:%d\t",Reset_Cycle_1);
+//					printf("Reset_Cycle_2:%d\r\n",Reset_Cycle_2);
+//					resetstate++;
+//				}
 				//第二次复位
-				if(Reach_Reset_Pos()==2)
+				if(resetstate==2&&Reach_Reset_Pos()==2)
 				{
-					remap_pos=GetMotorData(YAW_MOTOR,false).ecd_angle;			//>由于remap_pos=reset_pos_angle_2;所以省去reset_pos_angle_2变量
-					remap_cycle=GetMotorData(YAW_MOTOR,false).cycles;	//>remap_cycle=reset_pos_cycle_2;所以省去reset_pos_cycle_2变量
-					remap_angle=remap_pos-reset_pos_1+Full_Ecd_Angle*(remap_cycle-Reset_Cycle_1);  //绝对值
-					remap_angle=remap_angle>0?remap_angle:-remap_angle;
-					work_state = FOLLOW_UP_STATE;
+					remap_pos_2=GetMotorData(YAW_MOTOR,false).angle;			//>由于remap_pos=reset_pos_angle_2;所以省去reset_pos_angle_2变量
+					Reset_Cycle_2=GetMotorData(YAW_MOTOR,false).cycles;	//>remap_cycle=reset_pos_cycle_2;所以省去reset_pos_cycle_2变量
+//					remap_angle=remap_pos_2-reset_pos_1+360.0*(Reset_Cycle_2-Reset_Cycle_1);  //绝对值
+//					remap_angle>0?(remap_angle=remap_angle):(remap_angle=-remap_angle);
+					
+//					printf("reset_pos_1:%d\t",(int)reset_pos_1);
+//					printf("remap_pos_2:%d\t",(int)remap_pos_2);
+//					printf("Reset_Cycle_1:%d\t",Reset_Cycle_1);
+//					printf("Reset_Cycle_2:%d\r\n",Reset_Cycle_2);
+					resetstate++;
 				}
-			}	
+				else if(resetstate==3&&Reach_Reset_Pos()==3)
+				{
+					remap_pos_3=GetMotorData(YAW_MOTOR,false).angle;
+					Reset_Cycle_3=GetMotorData(YAW_MOTOR,false).cycles;
+					remap_pos=((float)((remap_pos_2+remap_pos_3)+360.0*(Reset_Cycle_3+Reset_Cycle_2))/2.0);
+					work_state = FOLLOW_UP_STATE;
+//					printf("remap_pos_3:%d\t",(int)remap_pos_3);
+//					printf("Reset_Cycle_3:%d\t",Reset_Cycle_3);
+//					printf("remap_pos:%d\t",(int)remap_pos);
+//					printf("remap_angle:%d\t",(int)remap_angle);
+				}
+			}
+			else{
+				CM_rotate_target=GetChassisSpeedTarget().rotate_target;
+			}
 		}break;
 	/*follow up mode*/
 		case FOLLOW_UP_STATE:{
+			static float last_yaw_remapped_yaw_angle;
+			if(work_state_lastime==FREE_VIEW_STATE){
+				last_yaw_remapped_yaw_angle=remapped_yaw_angle;
+				GMYawRamp.SetScale(&GMYawRamp, fabs(last_yaw_remapped_yaw_angle)*5);//斜坡函数设定值,若误差为180度则回归时间900ms
+				GMYawRamp.ResetCounter(&GMYawRamp);
+				GMPitchRamp.SetScale(&GMPitchRamp, 500);//斜坡函数设定值,若误差为180度则回归时间900ms
+				GMPitchRamp.ResetCounter(&GMPitchRamp);
+				SetGimbalTarget_P(PitchAngleLast); 	//设定Pitch轴目标值为之前的位置
+			}
+			else if(work_state_lastime==CHASSIS_ROTATE_STATE){
+				last_yaw_remapped_yaw_angle=remapped_yaw_angle;
+				CMRamp.SetScale(&CMRamp, fabs(last_yaw_remapped_yaw_angle)*10);
+				CMRamp.ResetCounter(&CMRamp);
+			}
+			work_state_lastime=work_state;//更新上一时间状态
 			if(work_state_last==CHASSIS_ROTATE_STATE)
 			{
 				GMYPositionPID.ref = (GetGimbalTarget().yaw_angle_target-YawTargetBias);
-				GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
+				GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawIMUAngleBias);
 				//底盘回复原位
-				CMRotatePID.ref=0;
-				CMRotatePID.fdb=(remapped_yaw_angle+360*remapped_yaw_cycle-YawRemappedBias); 
+				CMRotatePID.ref=last_yaw_remapped_yaw_angle*(1-CMRamp.Calc(&CMRamp));
+				CMRotatePID.fdb=remapped_yaw_angle; 
 				CMRotatePID.Calc(&CMRotatePID);
-				SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,CMRotatePID.output);
+				CM_forward_back_target=GetChassisSpeedTarget().forward_back_target;
+				CM_left_right_target=GetChassisSpeedTarget().left_right_target;
+				(CMRotatePID.output>0)?(CM_rotate_target=200):(CM_rotate_target=-200);
 				//----------需要加入底盘复位机制-------------//
-				if(remapped_yaw_angle+360*remapped_yaw_cycle)work_state_last=FOLLOW_UP_STATE;
+				if(YAW_SWITCH==POS_RESET)work_state_last=FOLLOW_UP_STATE;
 			}
 			else{
-				GMYPositionPID.ref = 0;
-				GMYPositionPID.fdb = remapped_yaw_angle;
-				SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,GetChassisSpeedTarget().rotate_target);
+				GMYPositionPID.ref = last_yaw_remapped_yaw_angle*(1-GMYawRamp.Calc(&GMYawRamp));
+				GMYPositionPID.fdb = remapped_yaw_angle;//+360.0*remapped_yaw_cycle-YawRemappedBias;
+				CM_forward_back_target=GetChassisSpeedTarget().forward_back_target;
+				CM_left_right_target=GetChassisSpeedTarget().left_right_target;
+				CM_rotate_target=GetChassisSpeedTarget().rotate_target;
 			}
+			GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
+			GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles);
+			
+			
 		}break;
 	/*free view mode*/
 		case FREE_VIEW_STATE:{
+			if(work_state_lastime!=FREE_VIEW_STATE){
+				PitchAngleLast=GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles;
+			}
+			work_state_lastime=work_state;//更新上一次状态
+			GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
+			GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles);
 			GMYPositionPID.ref = (GetGimbalTarget().yaw_angle_target-YawTargetBias);
 			GMYPositionPID.fdb = (remapped_yaw_angle+360*remapped_yaw_cycle-YawRemappedBias);
-			SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,0);
+			CM_forward_back_target=GetChassisSpeedTarget().forward_back_target;
+			CM_left_right_target=GetChassisSpeedTarget().left_right_target;
+			CM_rotate_target=0;
 		}break;
 	/*chassis rotate mode*/
 		case CHASSIS_ROTATE_STATE:{
+			work_state_lastime=work_state;//更新上一次状态
 			GMYPositionPID.ref = (GetGimbalTarget().yaw_angle_target-YawTargetBias);
-			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
-			SendChassisSpeed(CAN1,0x00,GetChassisSpeedTarget().forward_back_target,GetChassisSpeedTarget().left_right_target,CHASSIS_ROTATE_SPEED);
+			GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawIMUAngleBias);
+			CM_forward_back_target=GetChassisSpeedTarget().forward_back_target;
+			CM_left_right_target=GetChassisSpeedTarget().left_right_target;
+			CM_rotate_target=400;//CHASSIS_ROTATE_SPEED;
 		}break;
-		case STOP_STATE:{}break;
+		case STOP_STATE:{
+		work_state_lastime=work_state;//更新上一次状态
+		}break;
 	}
 }
 
@@ -225,9 +305,10 @@ static void GimbalControlModeSwitch(void){
 */
 static void WorkStateChange(void){
 	work_state_last=work_state_lastime;
-	YawAngleBias = Get_IMU_data().yaw;					///< @brief 获取陀螺仪初始位置
+	YawIMUAngleBias = Get_IMU_data().yaw;				///< @brief 获取陀螺仪初始位置
+	YawAngleBias = 0;									///< @brief 获取yaw初始位置
 	YawTargetBias = GetGimbalTarget().yaw_angle_target; ///< @brief 获取YAW目标值初始位置
-	YawRemappedBias = (remapped_yaw_angle+360*remapped_yaw_cycle);
+	YawRemappedBias = (remapped_yaw_angle+360.0*remapped_yaw_cycle);
 	
 }
 
@@ -237,8 +318,8 @@ static void WorkStateChange(void){
 static void GMPitchControlLoop(void){
 	if(GetWorkState()!=STARTUP_STATE){
 		GMPPositionPID.ref = GetGimbalTarget().pitch_angle_target;
-		GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles) * GMPitchRamp.Calc(&GMPitchRamp);
-	}	
+		GMPPositionPID.fdb = (GetMotorData(PIT_MOTOR,false).angle+360*GetMotorData(PIT_MOTOR,false).cycles);
+	}
 	GMPPositionPID.Calc(&GMPPositionPID);
 }
 
@@ -246,6 +327,18 @@ static void GMPitchControlLoop(void){
 @brief Yaw控制环
 */
 static void GMYawControlLoop(void){
+	if(YAW_SWITCH==POS_RESET)LED_C=LED_ON;
+	else LED_C=LED_OFF;
+//	if(xTaskGetTickCount()<1000){
+//		YawTargetBias=GetMotorData(YAW_MOTOR,false).angle+360*GetMotorData(YAW_MOTOR,false).cycles;
+////		YawTargetBias= Get_IMU_data().yaw;
+//	}
+//	else{
+//	GMYPositionPID.ref = 0;//GetGimbalTarget().yaw_angle_target;
+//	GMYPositionPID.fdb = GetMotorData(YAW_MOTOR,false).angle+360*GetMotorData(YAW_MOTOR,false).cycles-YawTargetBias;
+////	GMYPositionPID.fdb = -(Get_IMU_data().yaw-YawAngleBias);
+//	GMYPositionPID.Calc(&GMYPositionPID);
+//	}
 	GMYPositionPID.Calc(&GMYPositionPID);
 }
 
@@ -254,7 +347,7 @@ static void GMYawControlLoop(void){
 */
 static void GimbalMotorOutput(void){
 	SetMotorCurrent(YAW_MOTOR,GMYPositionPID.output);
-	SetMotorCurrent(PIT_MOTOR,GMPPositionPID.output);
+	SetMotorCurrent(PIT_MOTOR,GMPPositionPID.output * GMPitchRamp.Calc(&GMPitchRamp));
 }
 
 
@@ -262,28 +355,36 @@ static void GimbalMotorOutput(void){
 @brief 底盘控制程序
 */
 static void CMControlLoop(void){
-
+	static uint8_t tick_7ms=0;
+	if(tick_7ms==7){
+		tick_7ms=0;
+		if(GetInputMode()==STOP)
+			SendChassisSpeed(CAN2,0,0,0,0);
+		else
+		SendChassisSpeed(CAN2,1,CM_left_right_target,
+		CM_forward_back_target,
+		CM_rotate_target);
+	}
+	tick_7ms++;
 }
 
 /** 
 @brief 重映射角度范围
 */
 static void Remapping_Yaw_Angle(void){
-	static uint32_t temp=0;
-	//计算圈数和连续的总角度0~8912：0~360°
-	if((GetMotorData(YAW_MOTOR,false).ecd_angle-GetMotorData(YAW_MOTOR,true).ecd_angle)>7000)
-		remapped_yaw_cycle--;
-	else if((GetMotorData(YAW_MOTOR,false).ecd_angle-GetMotorData(YAW_MOTOR,true).ecd_angle)<-7000)
-		remapped_yaw_cycle++;
-	temp=GetMotorData(YAW_MOTOR,false).ecd_angle+Full_Ecd_Angle*remapped_yaw_cycle;
-	//角度映射到-180~180范围，并修正圈数
-	remapped_yaw_angle=(temp%(int)Full_Ecd_Angle)*360.0/Full_Ecd_Angle;
+	static float temp=0;
+	//计算连续的总角度
+	temp=GetMotorData(YAW_MOTOR,false).angle+360.0*GetMotorData(YAW_MOTOR,false).cycles-remap_pos;
+	//角度映射到0~360范围，并修正圈数
+	remapped_yaw_angle=((int32_t)(100*temp)%(int32_t)(100*remap_angle))*360.0f/100.0f/remap_angle;
+	if(remapped_yaw_angle<0)remapped_yaw_angle=360.0+remapped_yaw_angle;//负数取余问题(不同语言有不同结果)
+	remapped_yaw_cycle=(int16_t)(temp+remap_angle/2)/remap_angle;
+	if((temp+remap_angle/2.0)<0)remapped_yaw_cycle--;
+	//角度映射到-180~180°范围
 	if(remapped_yaw_angle>180){
-		remapped_yaw_cycle++;
 		remapped_yaw_angle-=360.0f;
 	}
 	else if(remapped_yaw_angle<-180){
-		remapped_yaw_cycle--;
 		remapped_yaw_angle+=360.0f;
 	}
 }

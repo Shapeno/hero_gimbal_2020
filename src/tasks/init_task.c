@@ -38,7 +38,7 @@ TaskHandle_t IMU_Task_Handler;		//任务句柄
 void IMU_Task(void*p_arg);			//任务函数
 //控制任务
 #define CONTROL_TASK_PRIO	2			//任务优先级
-#define CONTROL_STK_SIZE	128			//任务堆栈大小
+#define CONTROL_STK_SIZE	256			//任务堆栈大小
 #define CONTROL_TASK_PERIOD 1			//任务运行周期ms
 TaskHandle_t Control_Task_Handler;		//任务句柄
 void Control_Task(void*p_arg);			//任务函数

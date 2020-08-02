@@ -8,19 +8,19 @@
 #define PITCH_MAX 45.0f
 #define PITCH_MIN -45.0f
 ///	@brief	遥控器控制的一些定义
-#define STICK_TO_CHASSIS_SPEED_REF_FACT     0.30f
+#define STICK_TO_CHASSIS_SPEED_REF_FACT     1.0f
 #define STICK_TO_PITCH_ANGLE_INC_FACT       0.004f
-#define STICK_TO_YAW_ANGLE_INC_FACT         0.002f
+#define STICK_TO_YAW_ANGLE_INC_FACT         0.016f
 #define MOUSE_TO_PITCH_ANGLE_INC_FACT 		  -0.025f
 #define MOUSE_TO_YAW_ANGLE_INC_FACT 		    -0.025f
 ///	@brief	底盘不同模式速度
-#define NORMAL_FORWARD_BACK_SPEED 			    207
-#define NORMAL_LEFT_RIGHT_SPEED   			    207
-#define HIGH_FORWARD_BACK_SPEED 			      330
-#define HIGH_LEFT_RIGHT_SPEED   			      230
+#define NORMAL_FORWARD_BACK_SPEED 			    330
+#define NORMAL_LEFT_RIGHT_SPEED   			    330
+#define HIGH_FORWARD_BACK_SPEED 			      660
+#define HIGH_LEFT_RIGHT_SPEED   			      660
 #define SUPER_HIGH_FORWARD_BACK_SPEED 			414
 #define SUPER_HIGH_LEFT_RIGHT_SPEED   			414
-#define MOUSE_TO_ROTATE_INC_FACT				1
+#define MOUSE_TO_ROTATE_INC_FACT				10
 
 
 ///	@brief	输入模式枚举
@@ -62,6 +62,7 @@ void MouseShootControl(Mouse_Data_t *mouse);
 //------------------------------------------------------------
 InputMode_e GetInputMode(void);
 Gimbal_Target_t GetGimbalTarget(void);
+void SetGimbalTarget_P(float targ);
 ChassisSpeed_Target_t GetChassisSpeedTarget(void);
 
 #endif

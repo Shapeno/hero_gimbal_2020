@@ -37,9 +37,9 @@
 #define CAN_DEVICE_NUM 		6
 //Yaw轴电机
 #define YAW_MOTOR			1
-#define	YAW_MOTOR_ID		0
-#define YAW_MOTOR_TYPE		RM6623
-#define YAW_MOTOR_CH		CAN_1
+#define	YAW_MOTOR_ID		1
+#define YAW_MOTOR_TYPE		GM6020
+#define YAW_MOTOR_CH		CAN_2
 #define YAW_MOTOR_BIAS		7260
 //Pitch轴电机
 #define PIT_MOTOR			2
@@ -67,9 +67,9 @@
 #define FRIC_MID_MOTOR_BIAS		0
 //拨弹轮
 #define RAMMER_MOTOR			6
-#define	RAMMER_MOTOR_ID			
-#define RAMMER_MOTOR_TYPE		
-#define RAMMER_MOTOR_CH			
+#define	RAMMER_MOTOR_ID			4
+#define RAMMER_MOTOR_TYPE		C620
+#define RAMMER_MOTOR_CH			CAN_2
 #define RAMMER_MOTOR_BIAS		0
 
 #define Chassis_ID	0x402

@@ -46,9 +46,9 @@
 //大弹丸速度(m/s)换算到摩擦轮转速速度(rpm)1.357*
 #define BULLET_SPEED_TO_MOTOR_SPEED	(272.837f)
 //启动模式时间
-#define STARTUP_TIME 4000
+#define STARTUP_TIME 0
 //自旋速度
-#define CHASSIS_ROTATE_SPEED 0
+#define CHASSIS_ROTATE_SPEED 100
 
 /// @brief 云台的控制模式
 typedef enum{
@@ -65,7 +65,7 @@ typedef enum{
 	0,\
 	0,\
 	{0,0},\
-	4.50f,\
+	1.50f,\
 	0.0f,\
 	0.0f,\
 	0,\
@@ -75,7 +75,7 @@ typedef enum{
 	1000,\
 	1500,\
 	0,\
-	5000,\
+	1024,\
 	0,\
 	0,\
 	0,\
@@ -144,7 +144,7 @@ typedef enum{
 	1000,\
 	1500,\
 	0,\
-	5000,\
+	25000,\
 	0,\
 	0,\
 	0,\

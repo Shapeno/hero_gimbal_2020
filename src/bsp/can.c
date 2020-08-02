@@ -411,7 +411,7 @@ void CAN1_Init(void){
 	GPIO_Init(GPIOD, &gpio);
 	nvic.NVIC_IRQChannel = CAN1_RX0_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 1;
-	nvic.NVIC_IRQChannelSubPriority = 1;
+	nvic.NVIC_IRQChannelSubPriority = 0;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&nvic);
 	nvic.NVIC_IRQChannel = CAN1_TX_IRQn;
@@ -456,14 +456,15 @@ void CAN2_Init(void){
 	GPIO_InitTypeDef       gpio;
 	NVIC_InitTypeDef       nvic;
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);//测试
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1|RCC_APB1Periph_CAN2, ENABLE);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource12, GPIO_AF_CAN2);
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource13, GPIO_AF_CAN2); 
 	gpio.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 ;
+	gpio.GPIO_OType = GPIO_OType_PP;
+	gpio.GPIO_Speed = GPIO_Speed_100MHz;
 	gpio.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_Init(GPIOB, &gpio);
-	nvic.NVIC_IRQChannel = CAN2_RX0_IRQn;
+	nvic.NVIC_IRQChannel = CAN2_RX1_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 2;
 	nvic.NVIC_IRQChannelSubPriority = 1;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
@@ -491,20 +492,14 @@ void CAN2_Init(void){
 	can_filter.CAN_FilterNumber=14;	//CAN1、CAN2共用28各过滤器，CAN1用0~13
 	can_filter.CAN_FilterMode=CAN_FilterMode_IdMask;
 	can_filter.CAN_FilterScale=CAN_FilterScale_32bit;
-	
-//	can_filter.CAN_FilterIdHigh= (((u32)0x427<<3)&0xFFFF0000)>>16;    //要过滤的ID高位
-//  can_filter.CAN_FilterIdLow= (((u32)0x427<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF; //要过滤的ID低位
-//  can_filter.CAN_FilterMaskIdHigh= 0xFFFF;   //过滤器高16位每位必须匹配
-//  can_filter.CAN_FilterMaskIdLow= 0xFFFF;   //过滤器低16位每位必须匹配
-	
 	can_filter.CAN_FilterIdHigh=0x0000;
 	can_filter.CAN_FilterIdLow=0x0000;
 	can_filter.CAN_FilterMaskIdHigh=0x0000;
-	can_filter.CAN_FilterMaskIdLow=0x0400;
-	can_filter.CAN_FilterFIFOAssignment=CAN_FilterFIFO0;	
+	can_filter.CAN_FilterMaskIdLow=0x0000;
+	can_filter.CAN_FilterFIFOAssignment=CAN_FilterFIFO1;	
 	can_filter.CAN_FilterActivation=ENABLE;
 	CAN_FilterInit(&can_filter);
-	CAN_ITConfig(CAN2,CAN_IT_FMP0,ENABLE);
+	CAN_ITConfig(CAN2,CAN_IT_FMP1,ENABLE);
 	CAN_ITConfig(CAN2,CAN_IT_TME,ENABLE);
 }
 
@@ -595,10 +590,10 @@ void CAN1_TX_IRQHandler(void){
 void CAN1_RX0_IRQHandler(void){
 	CanRxMsg rx_message;
 	if(CAN_GetITStatus(CAN1,CAN_IT_FMP0)!= RESET){
-		CAN_ClearITPendingBit(CAN1, CAN_IT_FF0);
-		CAN_ClearFlag(CAN1, CAN_FLAG_FF0); 
+		CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
 		CAN_Receive(CAN1, CAN_FIFO0, &rx_message);
 		can_msg_encode(&rx_message,CAN_1);
+		
 	}
 }
 
@@ -608,12 +603,13 @@ void CAN2_TX_IRQHandler(void){
   }
 }
 
-void CAN2_RX0_IRQHandler(void){
+void CAN2_RX1_IRQHandler(void){
 	CanRxMsg rx_message;
-	if(CAN_GetITStatus(CAN2,CAN_IT_FMP0)!= RESET){
-		CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
-		CAN_Receive(CAN2, CAN_FIFO0, &rx_message);
+	if(CAN_GetITStatus(CAN2,CAN_IT_FMP1)!= RESET){
+		CAN_ClearITPendingBit(CAN2, CAN_IT_FMP1);
+		CAN_Receive(CAN2, CAN_FIFO1, &rx_message);
 		can_msg_encode(&rx_message,CAN_2);
+		
 	}
 }
 

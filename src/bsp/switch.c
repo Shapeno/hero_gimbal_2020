@@ -34,16 +34,20 @@ void YAW_Switch_Init(void){
  * @return uint8_t 初始为0，最大到2次
  */
 uint8_t Reach_Reset_Pos(void){
-	static uint8_t reach=0;
+	static uint8_t reach=1;
 	static uint32_t time=0;
 	if(reach<2){
 		if(YAW_SWITCH==POS_RESET){
 			if(xTaskGetTickCount()>time){
 				reach++;
-				time=xTaskGetTickCount()+500;
+				time=xTaskGetTickCount()+1000;
 			}
 		}
-	}	
+	}
+	if(reach==2){
+		if(YAW_SWITCH==NO_POS_RESET)
+			reach=3;
+	}
 	return reach;
 }
 
