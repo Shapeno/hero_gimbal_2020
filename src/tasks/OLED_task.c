@@ -96,7 +96,6 @@ uint8_t OLED_Button(void)
 	static uint8_t _Button_Val=0;
 	static uint8_t _Button_Val_last=0;
 //	static bool	_Button_Change=0;
-	static portTickType currentTime;
 	static portTickType KeyChangeTime;
 	uint16_t ad1;
 	

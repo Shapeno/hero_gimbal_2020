@@ -25,6 +25,7 @@
 #include "sys.h"
 #include "bsp.h"
 #include "switch.h"
+#include "mw_motor.h"
 
 #include "ramp.h"
 #include "pid_regulator.h"

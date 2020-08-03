@@ -105,7 +105,7 @@ else if(val>=max)\
 {\
 	val = max;\
 }\
-else {val = val;}\
+else {val = val;}
 ///	@brief	获取较小值
 #define VAL_MIN(a, b) ((a) < (b) ? (a) : (b))
 ///	@brief	获取较大值

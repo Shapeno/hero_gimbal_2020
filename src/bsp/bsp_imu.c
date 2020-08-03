@@ -38,7 +38,6 @@ volatile float        exInt, eyInt, ezInt;                   /* error integral *
 static volatile float gx, gy, gz, ax, ay, az, mx, my, mz;  
 volatile uint32_t     last_update, now_update;               /* Sampling cycle count, ubit ms */
 static uint8_t        tx, rx;
-static uint8_t        tx_buff[14] = { 0xff };
 uint8_t               mpu_buff[14];                          /* buffer to save imu raw data */
 uint8_t               ist_buff[6];                           /* buffer to save IST8310 raw data */
 mpu_data_t            mpu_data;
@@ -117,7 +116,6 @@ uint8_t mpu_read_bytes(uint8_t const regAddr, uint8_t* pData, uint8_t len)
 {
     MPU_NSS_LOW;
     tx         = regAddr | 0x80;
-    tx_buff[0] = tx;
     SPI_ReadWriteByte(tx);
     for(int i = 0;i<len;i++)
     {
