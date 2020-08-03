@@ -19,6 +19,7 @@
 *----------------------------------------------------------------------------*
 *****************************************************************************/
 #include "can.h"
+#include "mw_motor.h"
 
 
 void CAN_Device_Init(){
@@ -28,14 +29,12 @@ void CAN_Device_Init(){
 	CAN_Motor_Config(FRIC_UP_MOTOR,FRIC_UP_MOTOR_ID,FRIC_UP_MOTOR_TYPE,FRIC_UP_MOTOR_CH,FRIC_UP_MOTOR_BIAS);
 	CAN_Motor_Config(FRIC_MID_MOTOR,FRIC_MID_MOTOR_ID,FRIC_MID_MOTOR_TYPE,FRIC_MID_MOTOR_CH,FRIC_MID_MOTOR_BIAS);
 	CAN_Motor_Config(RAMMER_MOTOR,RAMMER_MOTOR_ID,RAMMER_MOTOR_TYPE,RAMMER_MOTOR_CH,RAMMER_MOTOR_BIAS);
-	CAN_ID_CHECK();
-	CAN_id_send_Print();
+	CAN_Motor_ID_CHECK();
+	CAN_Motor_Send_ID_Print();
 	CAN1_Init();
 	CAN2_Init();
 }
 
 void CanMsgPrc(){
-	SendMotorCurrent(PIT_MOTOR);
-	SendMotorCurrent(YAW_MOTOR);
-	SendMotorCurrent(FRIC_DOWN_MOTOR);
+	SendMotorCurrent();
 }

@@ -667,6 +667,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\bsp\uart8.c</FilePath>
             </File>
+            <File>
+              <FileName>mw_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\mw_motor.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
