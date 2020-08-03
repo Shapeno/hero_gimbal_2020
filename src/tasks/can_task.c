@@ -35,7 +35,5 @@ void CAN_Device_Init(){
 }
 
 void CanMsgPrc(){
-	SendMotorCurrent(PIT_MOTOR);
-	SendMotorCurrent(YAW_MOTOR);
-	SendMotorCurrent(FRIC_DOWN_MOTOR);
+	SendMotorCurrent();
 }

@@ -180,7 +180,7 @@ void CAN_ID_CHECK(void);
 void CAN_id_send_Print(void);
 Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data);
 void SetMotorCurrent(uint8_t device_seq, int16_t current);
-void SendMotorCurrent(uint8_t device_seq);
+void SendMotorCurrent();
 
 void SendChassisSpeed(CAN_TypeDef *CANx, uint8_t mode, int16_t Vx, int16_t Vy, int16_t W);
 gun_data_t Get_Gun_Data(void);

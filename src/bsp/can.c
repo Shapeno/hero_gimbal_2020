@@ -21,6 +21,8 @@
 *----------------------------------------------------------------------------*
 *  2019/09/18 | 1.0.0.3   | DengXY	       | Function test                   *
 *----------------------------------------------------------------------------*
+*  2020/08/3  | 1.0.0.4   | DengXY	       | renew sendmotorcurrent()        *
+*----------------------------------------------------------------------------*
 *****************************************************************************/
 #include "sys.h"
 #include <string.h>
@@ -292,45 +294,62 @@ void SetMotorCurrent(uint8_t device_seq, int16_t current){
 0x2FF	GM6020,RM6623
 @param device_seq必须是电机的设备序列号
 */
-void SendMotorCurrent(uint8_t device_seq){
-	if(can_cfg_info[device_seq-1].type>Chassis){
+void SendMotorCurrent(){
+	static uint8_t can_send_id_flags=0;//7-null;6-state flag;5:3-CAN2-0x200/0x1FF/0x2FF;2:0-CAN1-0x200/0x1FF/0x2FF;
+	//获得有哪些发送id需要发送，以及在哪条can总线上，只需进入一次获取can_send_id_flags各标志位
+	if((can_send_id_flags&0x40)==0x00){
+		for(uint8_t device_seq=1;device_seq>=CAN_DEVICE_NUM;device_seq++){
+			switch(can_cfg_info[device_seq-1].id_send){
+				case 0x200:{
+					if(can_cfg_info[device_seq-1].ch==CAN_1){can_send_id_flags=(0x01<<2);}
+					else{can_send_id_flags=(0x01<<5);}
+				}break;
+				case 0x1FF:{
+					if(can_cfg_info[device_seq-1].ch==CAN_1){can_send_id_flags=(0x01<<1);}
+					else{can_send_id_flags=(0x01<<4);}
+				}break;
+				case 0x2FF:{
+					if(can_cfg_info[device_seq-1].ch==CAN_1){can_send_id_flags=(0x01<<0);}
+					else{can_send_id_flags=(0x01<<3);}
+				}break;
+			}
+		}
+		can_send_id_flags|=0x40;//获得所有电机标志位后不再进入
+	}
+	{
 		CanTxMsg tx_message;
-		tx_message.StdId = can_cfg_info[device_seq-1].id_send;
-		  //gimbal_yaw_iq = 0;
 		tx_message.IDE = CAN_Id_Standard;
 		tx_message.RTR = CAN_RTR_Data;
 		tx_message.DLC = 0x08;
-		switch(can_cfg_info[device_seq-1].id_send){
-			case 0x200:{
-				if(can_cfg_info[device_seq-1].ch==CAN_1){
-					memcpy(tx_message.Data,data_CAN1_0x200,sizeof(tx_message.Data));
-					CAN_Transmit(CAN1,&tx_message);
-				}
-				else{
-					memcpy(tx_message.Data,data_CAN2_0x200,sizeof(tx_message.Data));
-					CAN_Transmit(CAN2,&tx_message);
-				}
-			}break;
-			case 0x1FF:{
-				if(can_cfg_info[device_seq-1].ch==CAN_1){
-					memcpy(tx_message.Data,data_CAN1_0x1FF,sizeof(tx_message.Data));
-					CAN_Transmit(CAN1,&tx_message);
-				}
-				else{
-					memcpy(tx_message.Data,data_CAN2_0x1FF,sizeof(tx_message.Data));
-					CAN_Transmit(CAN2,&tx_message);
-				}
-			}break;
-			case 0x2FF:{
-				if(can_cfg_info[device_seq-1].ch==CAN_1){
-					memcpy(tx_message.Data,data_CAN1_0x2FF,sizeof(tx_message.Data));
-					CAN_Transmit(CAN1,&tx_message);
-				}
-				else{
-					memcpy(tx_message.Data,data_CAN2_0x2FF,sizeof(tx_message.Data));
-					CAN_Transmit(CAN2,&tx_message);
-				}
-			}break;
+		if((can_send_id_flags&(0x01<0))){//CAN1_0x2FF
+			tx_message.StdId=0x2FF;
+			memcpy(tx_message.Data,data_CAN1_0x2FF,sizeof(tx_message.Data));
+			CAN_Transmit(CAN1,&tx_message);
+		}
+		if((can_send_id_flags&(0x01<1))){//CAN1_0x1FF
+			tx_message.StdId=0x1FF;
+			memcpy(tx_message.Data,data_CAN1_0x1FF,sizeof(tx_message.Data));
+			CAN_Transmit(CAN1,&tx_message);
+		}
+		if((can_send_id_flags&(0x01<2))){//CAN1_0x200
+			tx_message.StdId=0x200;
+			memcpy(tx_message.Data,data_CAN1_0x200,sizeof(tx_message.Data));
+			CAN_Transmit(CAN1,&tx_message);
+		}
+		if((can_send_id_flags&(0x01<3))){//CAN2_0x2FF
+			tx_message.StdId=0x2FF;
+			memcpy(tx_message.Data,data_CAN2_0x2FF,sizeof(tx_message.Data));
+			CAN_Transmit(CAN2,&tx_message);
+		}
+		if((can_send_id_flags&(0x01<4))){//CAN2_0x1FF
+			tx_message.StdId=0x1FF;
+			memcpy(tx_message.Data,data_CAN2_0x1FF,sizeof(tx_message.Data));
+			CAN_Transmit(CAN2,&tx_message);
+		}
+		if((can_send_id_flags&(0x01<5))){//CAN2_0x200
+			tx_message.StdId=0x200;
+			memcpy(tx_message.Data,data_CAN2_0x200,sizeof(tx_message.Data));
+			CAN_Transmit(CAN2,&tx_message);
 		}
 	}
 }
