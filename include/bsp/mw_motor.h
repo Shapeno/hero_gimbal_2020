@@ -2,7 +2,7 @@
 #define MW_MOTOR_H
 /*****************************************************************************
 *  @file     mw_motor.c                                                  	 *
-*  @brief    官方电机的中间层头文件											 *
+*  @brief    RM电机的中间层头文件											 *
 *  包含了电机的配置相关的结构体和枚举类型									 *
 *  			                                                                 *
 *                                                                            *
@@ -16,12 +16,14 @@
 *----------------------------------------------------------------------------*
 *  2020/08/3  | 1.0.0.1   | DengXY	       | Create file                     *
 *----------------------------------------------------------------------------*
+*  2020/08/3  | 1.0.1.0  | DengXY	       | function decoupling             *
+*----------------------------------------------------------------------------*
 *****************************************************************************/
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "stm32f4xx.h"
 
+//电机码盘最大值
 #define Full_Ecd_Angle (8192.00)
 //------------------------------------------------------------
 //配置列表(用于初始化电机信息)
@@ -132,13 +134,14 @@ typedef struct
 
 //初始化、自检函数
 void CAN_Motor_Config(uint8_t seq,uint32_t can_id,Device_Type_e device,Can_Channel_e Can_x,int16_t bias);
-void CAN_Motor_ID_CHECK(void);
+bool CAN_Motor_ID_CHECK(void);
 void CAN_Motor_Send_ID_Print(void);
 //用户函数
 Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data);
 void SetMotorCurrent(uint8_t device_seq, int16_t current);
 void SendMotorCurrent(void);
 //底层解包函数
-void CAN_MSG_Encode( CanRxMsg * msg, Can_Channel_e CAN_x);
-
+void CAN_MSG_Encode( uint32_t StdId,uint8_t Data[8], Can_Channel_e CAN_x);
+//__weak函数
+void CAN_Data_Tx(uint32_t StdId,uint8_t Data[8],Can_Channel_e CAN_X);
 #endif

@@ -89,8 +89,21 @@ void RecieveChassisData(CanRxMsg * msg)
 	
 }
 
-
-
+//------------------------------------------------------------
+//mw_motor发送函数底层实现
+//------------------------------------------------------------
+void CAN_Data_Tx(uint32_t StdId,uint8_t Data[8],Can_Channel_e CAN_X){
+	CanTxMsg tx_message;
+	tx_message.IDE = CAN_Id_Standard;
+	tx_message.RTR = CAN_RTR_Data;
+	tx_message.DLC = 0x08;
+	tx_message.StdId=StdId;
+	memcpy(tx_message.Data,Data,sizeof(tx_message.Data));
+	if(CAN_X==CAN_1)
+		CAN_Transmit(CAN1,&tx_message);
+	else if(CAN_X==CAN_2)
+		CAN_Transmit(CAN2,&tx_message);
+}
 
 //------------------------------------------------------------
 //初始化函数
@@ -226,7 +239,7 @@ void CAN1_RX0_IRQHandler(void){
 		///接收底盘数据
 		if(rx_message.StdId==Chassis_ID)RecieveChassisData(&rx_message);
 		///接收电机数据
-		CAN_MSG_Encode(&rx_message,CAN_1);
+		else CAN_MSG_Encode(rx_message.StdId,rx_message.Data,CAN_1);
 		
 	}
 }
@@ -245,7 +258,7 @@ void CAN2_RX1_IRQHandler(void){
 		///接收底盘数据
 		if(rx_message.StdId==Chassis_ID)RecieveChassisData(&rx_message);
 		///接收电机数据
-		CAN_MSG_Encode(&rx_message,CAN_2);
+		else CAN_MSG_Encode(rx_message.StdId,rx_message.Data,CAN_2);
 		
 	}
 }

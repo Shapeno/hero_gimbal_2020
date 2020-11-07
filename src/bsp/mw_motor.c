@@ -2,7 +2,7 @@
 /*****************************************************************************
 *  @file     mw_motor.c                                                  	 *
 *  @brief    官方电机的中间层(MiddleWare)									 *
-*  包含了电机的配置函数，数据获取函数，底层解包函数							 *
+*  包含了电机的配置函数，数据获取函数，底层解码函数							 *
 *  			                                                                 *
 *                                                                            *
 *  @author   DENG		                                                     *
@@ -14,6 +14,8 @@
 *  <Date>     | <Version> | <Author>       | <Description>                   *
 *----------------------------------------------------------------------------*
 *  2020/08/3  | 1.0.0.1   | DengXY	       | Create file                     *
+*----------------------------------------------------------------------------*
+*  2020/08/3  | 1.0.1.0  | DengXY	       | function decoupling             *
 *----------------------------------------------------------------------------*
 *****************************************************************************/
 #include <stdio.h>
@@ -47,13 +49,13 @@ static uint8_t data_CAN2_0x1FF[8]={0};
 static uint8_t data_CAN2_0x2FF[8]={0};
 
 //------------------------------------------------------------
-//电机相关函数
+//电机配置函数
 //------------------------------------------------------------
 
 /**
 @brief CAN电机信息配置
 @param device_seq	设备序列号,用于区分设备，必须小于CAN_DEVICE_NUM
-@param ID			电调拨码卡关ID,若为底盘则为底盘的接收ID
+@param ID			电调拨码卡关ID
 @param device		设备类型，详细参考Motor_Data_t结构体注释
 @param CAN_x 		CAN_1或CAN_2
 @param bias			码盘角度计算的参考偏移量
@@ -135,7 +137,8 @@ void CAN_Motor_Config(uint8_t device_seq,uint32_t ID,Device_Type_e device,Can_Ch
 @brief 判断是否有重复ID
 只能在所有设备配置完后执行
 */
-void CAN_Motor_ID_CHECK(void){
+bool CAN_Motor_ID_CHECK(void){
+	bool Error=0;
 	for(int i=0;i<CAN_DEVICE_NUM;i++){
 		int id_i=0;
 		if(can_cfg_info[i].type==RM6623)id_i=can_cfg_info[i].id+1;
@@ -146,14 +149,15 @@ void CAN_Motor_ID_CHECK(void){
 			else id_j=can_cfg_info[j].id;
 			if(can_cfg_info[i].ch==can_cfg_info[j].ch){
 				if(can_cfg_info[i].id_send==can_cfg_info[j].id_send){
-					if(id_i==id_j)printf("序列%d设备发送ID重复\r\n",i+1);
+					if(id_i==id_j)printf("序列%d设备发送ID重复\r\n",i+1),Error=1;
 				}
 				if(can_cfg_info[i].id_recieve==can_cfg_info[j].id_recieve){
-					printf("序列%d设备接收ID重复\r\n",i+1);
+					printf("序列%d设备接收ID重复\r\n",i+1),Error=1;
 				}
 			}
 		}
 	}
+	return Error;
 }
 /**
 @brief 打印设备控制ID
@@ -168,8 +172,8 @@ void CAN_Motor_Send_ID_Print(void){
 	}
 }
 /**
-@brief 获取电机的数据
-@param device_seq必须是电机的设备序列号
+@brief 获取指定电机当前或上一次数据
+@param device_seq 配置列表中的电机的设备序列号
 @param last_data:false-当前数据，true-上一次数据
 @return 设备对应的Motor_Data_t类型的数据，
 	所有电机都有角度信息，不一定有其他信息
@@ -186,8 +190,8 @@ Motor_Data_t GetMotorData(uint8_t device_seq,bool last_data){
 0x200	C610,C620
 0x1FF	C610,C620,GM6020,RM6623,GM3510
 0x2FF	GM6020,RM6623
-@param device_seq必须是电机的设备序列号
-@param current是电机的控制电流
+@param 配置列表中电机的设备序列号
+@param current是电机的输出值
 */
 void SetMotorCurrent(uint8_t device_seq, int16_t current){
 	///<限幅（按照手册上的幅值限幅）
@@ -296,39 +300,24 @@ void SendMotorCurrent(){
 	}
     ///<按照标志位发送数据
 	{
-		CanTxMsg tx_message;
-		tx_message.IDE = CAN_Id_Standard;
-		tx_message.RTR = CAN_RTR_Data;
-		tx_message.DLC = 0x08;
+		
 		if((can_send_id_flags&(0x01<<0))){//CAN1_0x2FF
-			tx_message.StdId=0x2FF;
-			memcpy(tx_message.Data,data_CAN1_0x2FF,sizeof(tx_message.Data));
-			CAN_Transmit(CAN1,&tx_message);
+			CAN_Data_Tx(0x2FF,data_CAN1_0x2FF,CAN_1);
 		}
 		if((can_send_id_flags&(0x01<<1))){//CAN1_0x1FF
-			tx_message.StdId=0x1FF;
-			memcpy(tx_message.Data,data_CAN1_0x1FF,sizeof(tx_message.Data));
-			CAN_Transmit(CAN1,&tx_message);
+			CAN_Data_Tx(0x1FF,data_CAN1_0x1FF,CAN_1);
 		}
 		if((can_send_id_flags&(0x01<<2))){//CAN1_0x200
-			tx_message.StdId=0x200;
-			memcpy(tx_message.Data,data_CAN1_0x200,sizeof(tx_message.Data));
-			CAN_Transmit(CAN1,&tx_message);
+			CAN_Data_Tx(0x200,data_CAN1_0x200,CAN_1);
 		}
 		if((can_send_id_flags&(0x01<<3))){//CAN2_0x2FF
-			tx_message.StdId=0x2FF;
-			memcpy(tx_message.Data,data_CAN2_0x2FF,sizeof(tx_message.Data));
-			CAN_Transmit(CAN2,&tx_message);
+			CAN_Data_Tx(0x2FF,data_CAN2_0x2FF,CAN_2);
 		}
 		if((can_send_id_flags&(0x01<<4))){//CAN2_0x1FF
-			tx_message.StdId=0x1FF;
-			memcpy(tx_message.Data,data_CAN2_0x1FF,sizeof(tx_message.Data));
-			CAN_Transmit(CAN2,&tx_message);
+			CAN_Data_Tx(0x1FF,data_CAN2_0x1FF,CAN_2);
 		}
 		if((can_send_id_flags&(0x01<<5))){//CAN2_0x200
-			tx_message.StdId=0x200;
-			memcpy(tx_message.Data,data_CAN2_0x200,sizeof(tx_message.Data));
-			CAN_Transmit(CAN2,&tx_message);
+			CAN_Data_Tx(0x200,data_CAN2_0x200,CAN_2);
 		}
 	}
 }
@@ -345,58 +334,62 @@ void angle_convert(uint8_t seq){
 	if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)>300)motor_data[seq-1].cycles--;
 	else if((motor_data[seq-1].angle-motor_last_data[seq-1].angle)<-300)motor_data[seq-1].cycles++;
 }
+//------------------------------------------------------------
+//底层实现函数
+//------------------------------------------------------------
 /**
- * @brief 电机数据解码函数，放在CAN通信中断回调函数中
+ * @brief 电机数据解码函数，放在CAN通信中断回调函数中，电机在该函数中进行处理
  * 
- * @param msg CAN通信对应收到的消息
- * @param CAN_x CAN1或CAN2，取决于在哪个中断回调函数中
+ * @param uint32_t	StdId		CAN通信报文ID
+ * @param uint8_t	Data[8]		CAN通信8位数据
+ * @param Can_Channel_e	CAN_x	CAN_1或CAN_2，取决于在哪个中断回调函数中
  */
-void CAN_MSG_Encode( CanRxMsg * msg, Can_Channel_e CAN_x){
+void CAN_MSG_Encode( uint32_t StdId,uint8_t Data[8], Can_Channel_e CAN_x){
 	int i=0;
 	///接收电机数据
 	for(;i<CAN_DEVICE_NUM;i++){
 		if(can_cfg_info[i].ch==CAN_x){
-			if(msg->StdId==can_cfg_info[i].id_recieve){
+			if(StdId==can_cfg_info[i].id_recieve){
 				switch(can_cfg_info[i].type){
 					case C610:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].speed	=(msg->Data[2]<<8)|msg->Data[3];
-						motor_data[i].torque=(msg->Data[4]<<8)|msg->Data[5];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].speed	=(Data[2]<<8)|Data[3];
+						motor_data[i].torque=(Data[4]<<8)|Data[5];
 						angle_convert(i+1);//换算角度
 					}break;
 					case C620:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].speed	=(msg->Data[2]<<8)|msg->Data[3];
-						motor_data[i].torque=(msg->Data[4]<<8)|msg->Data[5];
-						motor_data[i].temperature=msg->Data[6];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].speed	=(Data[2]<<8)|Data[3];
+						motor_data[i].torque=(Data[4]<<8)|Data[5];
+						motor_data[i].temperature=Data[6];
 						angle_convert(i+1);
 					}break;
 					case GM6020:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].speed	=(msg->Data[2]<<8)|msg->Data[3];
-						motor_data[i].torque=(msg->Data[4]<<8)|msg->Data[5];
-						motor_data[i].temperature=msg->Data[6];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].speed	=(Data[2]<<8)|Data[3];
+						motor_data[i].torque=(Data[4]<<8)|Data[5];
+						motor_data[i].temperature=Data[6];
 						angle_convert(i+1);
 					}break;
 					case RM6623:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].torque=(msg->Data[2]<<8)|msg->Data[3];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].torque=(Data[2]<<8)|Data[3];
 						angle_convert(i+1);
 					}
 					case GM3510:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].torque=(msg->Data[2]<<8)|msg->Data[3];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].torque=(Data[2]<<8)|Data[3];
 						angle_convert(i+1);
 					}break;
 					case RM820R:{
 						motor_last_data[i]=motor_data[i];
-						motor_data[i].ecd_angle	=(msg->Data[0]<<8)|msg->Data[1];
-						motor_data[i].speed	=(msg->Data[2]<<8)|msg->Data[3];
+						motor_data[i].ecd_angle	=(Data[0]<<8)|Data[1];
+						motor_data[i].speed	=(Data[2]<<8)|Data[3];
 						angle_convert(i+1);
 					}
 					default:break;
@@ -405,5 +398,14 @@ void CAN_MSG_Encode( CanRxMsg * msg, Can_Channel_e CAN_x){
 			}
 		}
 	}
-	if(i==CAN_DEVICE_NUM)printf("存在未识别设备,ID=%#X\r\n",msg->StdId);///<若数组内有该设备，运行至此处时i=CAN_DEVICE_NUM+1
+	if(i==CAN_DEVICE_NUM)printf("存在未识别设备,ID=%#X\r\n",StdId);///<若数组内有该设备，运行至此处时i=CAN_DEVICE_NUM+1
+}
+/**
+ * @brief CAN通信数据发送函数，需要在对应工程底层文件中实现
+ * 
+ * @param Can_Channel_e	CAN_x	CAN_1或CAN_2，取决于在哪个中断回调函数中
+ * @param uint32_t	StdId		CAN通信报文ID
+ * @param uint8_t	Data[8]		CAN通信8位数据
+ */
+__weak void CAN_Data_Tx(uint32_t StdId,uint8_t Data[8],Can_Channel_e CAN_X){
 }
